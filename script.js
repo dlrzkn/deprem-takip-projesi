@@ -22,14 +22,23 @@ map.on('load', () => {
 
     // --- BUTON VE DÖNÜŞ SİSTEMİ ---
     let spinEnabled = false; // Başlangıçta kapalı
-    const btn = document.getElementById('rotationBtn');
+    const btn = document.getElementById('spin-btn'); // ID Eşitlendi!
 
     function rotateGlobe() {
         if (spinEnabled) {
             const center = map.getCenter();
-            center.lng -= 1.8; // Dönüş hızı
+            center.lng -= 1.0;
             map.easeTo({ center, duration: 1000, easing: (n) => n });
         }
+    }
+
+    if (btn) {
+        btn.onclick = () => {
+            spinEnabled = !spinEnabled;
+            btn.innerHTML = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
+            btn.style.background = spinEnabled ? 'rgba(46, 204, 113, 0.8)' : 'rgba(231, 76, 60, 0.8)';
+            if (spinEnabled) rotateGlobe();
+        };
     }
 
     // Butona tıklandığında kesin çalışır
