@@ -3,94 +3,95 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jd
 const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
-    center: [35.2433, 38.9637],
-    zoom: 3,
+    center: [0, 0],
+    zoom: 1.5,
     projection: 'globe'
 });
 
-let spinEnabled = false; // Başlangıçta kapalı (isteğe bağlı)
+let spinEnabled = true;
 let userInteracting = false;
 
 map.on('style.load', () => {
-    map.setFog({ 'color': 'rgb(15, 20, 30)', 'high-color': 'rgb(30, 60, 150)', 'star-intensity': 0.4 });
+    map.setFog({
+        'color': 'rgb(15, 20, 30)',
+        'high-color': 'rgb(30, 60, 150)',
+        'star-intensity': 0.4
+    });
 });
 
 async function updateQuakes() {
     try {
-        const [kRes, uRes] = await Promise.all([
-            fetch('https://api.orhanaydogdu.com.tr/deprem/kandilli/live').then(r => r.json()),
-            fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson').then(r => r.json())
-        ]);
-        
-        const kGeojson = {
-            type: 'FeatureCollection',
-            features: kRes.result.map(d => ({
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [parseFloat(d.lng), parseFloat(d.lat)] },
-                properties: { mag: d.mag, place: d.title, date: d.date, source: 'Kandilli' }
-            }))
-        };
+        const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+        const data = await response.json();
 
-        uRes.features.forEach(f => f.properties.source = 'USGS');
+        if (map.getSource('usgs')) {
+            map.getSource('usgs').setData(data);
+        } else {
+            map.addSource('usgs', { type: 'geojson', data: data });
 
-        // USGS Kaynağı
-        if (!map.getSource('usgs')) {
-            map.addSource('usgs', { type: 'geojson', data: uRes });
             map.addLayer({
-                id: 'usgs-viz', type: 'circle', source: 'usgs',
-                paint: { 
-                    'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 4, 7, 25],
-                    'circle-color': '#ffff00', 
-                    'circle-opacity': 0.6,
+                id: 'usgs-viz',
+                type: 'circle',
+                source: 'usgs',
+                paint: {
+                    // Profesyonel renk ve büyüklük skalası
+                    'circle-radius': [
+                        'interpolate', ['linear'], ['get', 'mag'],
+                        1, 2,
+                        3, 5,
+                        5, 12,
+                        7, 25
+                    ],
+                    'circle-color': [
+                        'step', ['get', 'mag'],
+                        '#00ff00', // 2.5 altı yeşil
+                        2.5, '#ffff00', // 2.5-4.5 sarı
+                        4.5, '#ffa500', // 4.5-6.0 turuncu
+                        6.0, '#ff0000'  // 6.0 üstü kırmızı
+                    ],
+                    'circle-opacity': 0.7,
                     'circle-stroke-width': 1,
-                    'circle-stroke-color': '#fff'
+                    'circle-stroke-color': '#ffffff'
                 }
             });
-        } else {
-            map.getSource('usgs').setData(uRes);
-        }
 
-        // Kandilli Kaynağı (Kırmızı ve Parlak)
-        if (!map.getSource('kandilli')) {
-            map.addSource('kandilli', { type: 'geojson', data: kGeojson });
-            map.addLayer({
-                id: 'kandilli-viz', type: 'circle', source: 'kandilli',
-                paint: { 
-                    'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 6, 7, 35],
-                    'circle-color': '#ff4d4d',
-                    'circle-opacity': 0.9,
-                    'circle-stroke-width': 2,
-                    'circle-stroke-color': '#fff'
-                }
+            // Tıklama özelliği (Pop-up)
+            map.on('click', 'usgs-viz', (e) => {
+                const props = e.features[0].properties;
+                const coordinates = e.features[0].geometry.coordinates.slice();
+                const date = new Date(props.time).toLocaleString('tr-TR');
+
+                new mapboxgl.Popup()
+                    .setLngLat(coordinates)
+                    .setHTML(`
+                        <div style="color:#333; font-family:sans-serif; padding:5px;">
+                            <strong style="font-size:14px; color:#e67e22;">M ${props.mag}</strong><br>
+                            <span style="font-weight:bold;">${props.place}</span><br>
+                            <small>${date}</small><br>
+                            <a href="${props.url}" target="_blank" style="color:#3498db; text-decoration:none; font-size:11px;">Detaylar (USGS)</a>
+                        </div>
+                    `)
+                    .addTo(map);
             });
-        } else {
-            map.getSource('kandilli').setData(kGeojson);
+
+            // Mouse imleci değişimi
+            map.on('mouseenter', 'usgs-viz', () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseleave', 'usgs-viz', () => map.getCanvas().style.cursor = '');
         }
-    } catch (e) { console.error("Veri yükleme hatası:", e); }
+    } catch (e) {
+        console.error("Veri çekme hatası:", e);
+    }
 }
-
-// Pop-up Fonksiyonu (Katmanlar oluştuktan sonra çalışır)
-function addPopups() {
-    ['kandilli-viz', 'usgs-viz'].forEach(layer => {
-        map.on('click', layer, (e) => {
-            const p = e.features[0].properties;
-            const time = p.source === 'USGS' ? new Date(p.time).toLocaleString('tr-TR') : p.date;
-            new mapboxgl.Popup()
-                .setLngLat(e.lngLat)
-                .setHTML(`<strong>${p.mag} ML</strong><br>${p.place}<br><small>${time}</small><br><b style="color:red">${p.source}</b>`)
-                .addTo(map);
-        });
-        map.on('mouseenter', layer, () => map.getCanvas().style.cursor = 'pointer');
-        map.on('mouseleave', layer, () => map.getCanvas().style.cursor = '');
-    });
-}
-
-map.on('load', () => {
-    updateQuakes().then(() => addPopups());
-    setInterval(updateQuakes, 60000);
-});
 
 // Otomatik Dönüş Kontrolü
+function rotateGlobe() {
+    if (spinEnabled && !userInteracting && map.getZoom() < 5) {
+        const center = map.getCenter();
+        center.lng -= 1.5;
+        map.easeTo({ center, duration: 1000, easing: (t) => t });
+    }
+}
+
 const spinBtn = document.getElementById('spin-btn');
 if (spinBtn) {
     spinBtn.onclick = () => {
@@ -100,13 +101,12 @@ if (spinBtn) {
     };
 }
 
-function rotateGlobe() {
-    if (spinEnabled && !userInteracting) {
-        const center = map.getCenter();
-        center.lng -= 1.5;
-        map.easeTo({ center, duration: 1000, easing: (t) => t });
-    }
-}
-map.on('moveend', rotateGlobe);
 map.on('mousedown', () => userInteracting = true);
 map.on('mouseup', () => userInteracting = false);
+map.on('moveend', rotateGlobe);
+
+map.on('load', () => {
+    updateQuakes();
+    rotateGlobe();
+    setInterval(updateQuakes, 60000); // 1 dakikada bir güncelle
+});
