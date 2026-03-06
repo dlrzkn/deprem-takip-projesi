@@ -8,10 +8,11 @@ const map = new mapboxgl.Map({
     projection: 'globe'
 });
 
-// Yakınlaştırma butonlarını ekle
+// Kontrolleri ekleyelim
 map.addControl(new mapboxgl.NavigationControl());
 
 map.on('load', () => {
+    // Atmosfer Ayarı
     map.setFog({
         'range': [1, 10],
         'color': '#000000',
@@ -20,41 +21,40 @@ map.on('load', () => {
         'star-intensity': 0.15
     });
 
-    // --- Akıllı Dönüş Sistemi (Zoom ve Mouse Dostu) ---
+    // --- Akıllı Dönüş Sistemi ---
+    let userInteracting = false;
     let spinEnabled = true;
-    const rotationSpeed = 0.5; // Hızı biraz düşürdük ki daha akıcı olsun
 
     function rotateGlobe() {
-        if (spinEnabled) {
+        if (spinEnabled && !userInteracting) {
             const center = map.getCenter();
-            center.lng -= rotationSpeed;
-            // duration ve easing ayarları zoom yapmana izin verecek şekilde yumuşatıldı
+            center.lng -= 0.5; // Dönüş hızı
             map.easeTo({ center, duration: 1000, easing: (n) => n });
         }
     }
 
-    // Mouse ile etkileşime girdiğinde dönüşü tamamen durdurur (Zoom yapmanı sağlar)
+    // Etkileşim olduğunda dönüşü durdurur (Zoom ve Drag için)
     map.on('movestart', (e) => {
-        if (e.originalEvent) spinEnabled = false;
-    });
-
-    // Boş bir yere tıkladığında dönüşü tekrar başlatmak istersen:
-    map.on('click', (e) => {
-        if (e.target === map) spinEnabled = true;
+        if (e.originalEvent) userInteracting = true;
     });
 
     map.on('moveend', () => {
         rotateGlobe();
     });
 
+    // Haritaya dokunulduğunda veya tıklandığında kontrolü kullanıcıya bırak
+    map.on('mousedown', () => { userInteracting = true; });
+    map.on('touchstart', () => { userInteracting = true; });
+
     rotateGlobe();
 
+    // Veri Kaynağı
     map.addSource('quakes', {
         'type': 'geojson',
         'data': 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson'
     });
 
-    // Isı Haritası
+    // Isı Haritası (Heatmap)
     map.addLayer({
         'id': 'quakes-heat',
         'type': 'heatmap',
@@ -65,7 +65,7 @@ map.on('load', () => {
         }
     });
 
-    // Nokta Katmanı (Kibarlaştırılmış Boyutlar)
+    // Nokta Katmanı (Yeni Lejand Renkleriyle Tam Uyumlu)
     map.addLayer({
         'id': 'quakes-point',
         'type': 'circle',
@@ -73,9 +73,11 @@ map.on('load', () => {
         'paint': {
             'circle-radius': [
                 'interpolate', ['linear'], ['get', 'mag'],
-                1, 2,   // Küçük depremler minik
-                5, 6,   // Orta depremler ideal
-                8, 15   // Dev depremler bile ekranı kaplamaz
+                1, 2,
+                3, 4,
+                5, 8,
+                7, 15,
+                9, 25
             ],
             'circle-color': [
                 'step', ['get', 'mag'],
@@ -89,13 +91,18 @@ map.on('load', () => {
 
     // Popup Sistemi
     map.on('click', 'quakes-point', (e) => {
-        spinEnabled = false; // Detay bakarken dünya dönmesin
+        userInteracting = true; // Popup açılınca dünyayı durdur
         const coordinates = e.features[0].geometry.coordinates.slice();
         const { mag, place, time } = e.features[0].properties;
 
         new mapboxgl.Popup({ offset: 10 })
             .setLngLat(coordinates)
-            .setHTML(`<div style="color:#222; padding:5px;"><b>M ${mag.toFixed(1)}</b><br>${place}</div>`)
+            .setHTML(`
+                <div style="color:#333; font-family:sans-serif; padding:5px;">
+                    <b style="font-size:1.2em; color:#e74c3c;">M ${mag.toFixed(1)}</b><br>
+                    <span>${place}</span>
+                </div>
+            `)
             .addTo(map);
     });
 });
