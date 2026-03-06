@@ -3,85 +3,110 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jd
 const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
-    center: [35, 39],
-    zoom: 2.5,
+    center: [0, 0],
+    zoom: 1.5,
     projection: 'globe'
 });
 
-map.addControl(new mapboxgl.NavigationControl());
+let spinEnabled = true;
+let userInteracting = false;
+
+map.on('style.load', () => {
+    map.setFog({
+        'color': 'rgb(15, 20, 30)',
+        'high-color': 'rgb(30, 60, 150)',
+        'star-intensity': 0.4
+    });
+});
+
+async function updateQuakes() {
+    try {
+        const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+        const data = await response.json();
+
+        if (map.getSource('usgs')) {
+            map.getSource('usgs').setData(data);
+        } else {
+            map.addSource('usgs', { type: 'geojson', data: data });
+
+            // Ana Görsel Katman
+            map.addLayer({
+                id: 'usgs-viz',
+                type: 'circle',
+                source: 'usgs',
+                paint: {
+                    'circle-radius': [
+                        'interpolate', ['linear'], ['get', 'mag'],
+                        0, 1.5, 2.5, 3, 4.5, 7, 6.0, 15, 8.0, 30, 10, 50
+                    ],
+                    'circle-color': [
+                        'step', ['get', 'mag'],
+                        '#2ecc71', 2.5, '#f1c40f', 4.5, '#e67e22', 6.0, '#e74c3c', 8.0, '#8e44ad'
+                    ],
+                    'circle-opacity': 0.8,
+                    'circle-stroke-width': 1,
+                    'circle-stroke-color': '#ffffff'
+                }
+            });
+
+            // --- POP-UP SİSTEMİ (GERİ GELDİ) ---
+            map.on('click', 'usgs-viz', (e) => {
+                const props = e.features[0].properties;
+                const date = new Date(props.time).toLocaleString('tr-TR');
+                
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(`
+                        <div style="color:#333; padding:10px; font-family:sans-serif; min-width:150px;">
+                            <strong style="font-size:16px; color:#e67e22;">M ${props.mag}</strong><br>
+                            <b style="display:block; margin:5px 0;">${props.place}</b>
+                            <hr style="border:0; border-top:1px solid #eee;">
+                            <small style="color:#666;">Tarih: ${date}</small><br>
+                            <a href="${props.url}" target="_blank" style="color:#3498db; font-size:11px; text-decoration:none;">USGS Detayı →</a>
+                        </div>
+                    `)
+                    .addTo(map);
+            });
+
+            map.on('mouseenter', 'usgs-viz', () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseleave', 'usgs-viz', () => map.getCanvas().style.cursor = '');
+        }
+    } catch (e) { console.error("Veri hatası:", e); }
+}
+
+// --- FİLTRELEME SİSTEMİ (AÇILIR KAPANIR) ---
+function filterMag(minMag) {
+    if (map.getLayer('usgs-viz')) {
+        map.setFilter('usgs-viz', ['>=', ['get', 'mag'], minMag]);
+    }
+}
+
+// Otomatik Dönüş Mantığı
+function rotateGlobe() {
+    if (spinEnabled && !userInteracting && map.getZoom() < 5) {
+        const center = map.getCenter();
+        center.lng -= 0.5;
+        map.easeTo({ center, duration: 1000, easing: (t) => t, essential: true });
+    }
+}
+
+map.on('moveend', rotateGlobe);
+map.on('mousedown', () => userInteracting = true);
+map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
 
 map.on('load', () => {
-    map.setFog({
-        'range': [1, 10],
-        'color': '#000000',
-        'high-color': '#000000',
-        'space-color': '#000000',
-        'star-intensity': 0.2
-    });
-
-    let spinEnabled = false; 
-    const btn = document.getElementById('spin-btn');
-
-    function rotateGlobe() {
-        if (spinEnabled) {
-            const center = map.getCenter();
-            center.lng -= 1.5;
-            map.easeTo({ center, duration: 1000, easing: (n) => n });
-        }
-    }
-
-    if (btn) {
-        btn.onclick = () => {
-            spinEnabled = !spinEnabled;
-            btn.innerHTML = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
-            btn.style.background = spinEnabled ? 'rgba(46, 204, 113, 0.8)' : 'rgba(231, 76, 60, 0.8)';
-            if (spinEnabled) rotateGlobe();
-        };
-    }
-
-    map.on('movestart', (e) => {
-        if (e.originalEvent && spinEnabled) {
-            spinEnabled = false;
-            if (btn) {
-                btn.innerHTML = 'Otomatik Dönüş: KAPALI';
-                btn.style.background = 'rgba(231, 76, 60, 0.8)';
-            }
-        }
-    });
-
-    map.on('moveend', () => { if (spinEnabled) rotateGlobe(); });
-
-    map.addSource('quakes', {
-        'type': 'geojson',
-        'data': 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson'
-    });
-
-    map.addLayer({
-        'id': 'quakes-point',
-        'type': 'circle',
-        'source': 'quakes',
-        'paint': {
-            'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 2, 3, 4, 5, 8, 7, 15, 9, 30],
-            'circle-color': [
-                'step', ['get', 'mag'],
-                '#2ecc71', 2.5, '#f1c40f', 4.5, '#e67e22', 6.0, '#e74c3c', 8.0, '#8e44ad'
-            ],
-            'circle-stroke-color': '#ffffff',
-            'circle-stroke-width': 1,
-            'circle-opacity': 0.8
-        }
-    });
-
-    // Pop-up Sistemi
-    map.on('click', 'quakes-point', (e) => {
-        const props = e.features[0].properties;
-        const date = new Date(props.time).toLocaleString('tr-TR');
-        new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(`<strong>M ${props.mag}</strong><br>${props.place}<br><small>${date}</small>`)
-            .addTo(map);
-    });
-
-    map.on('mouseenter', 'quakes-point', () => map.getCanvas().style.cursor = 'pointer');
-    map.on('mouseleave', 'quakes-point', () => map.getCanvas().style.cursor = '');
+    updateQuakes();
+    rotateGlobe();
+    setInterval(updateQuakes, 60000);
 });
+
+// Buton Kontrolü
+const spinBtn = document.getElementById('spin-btn');
+if (spinBtn) {
+    spinBtn.onclick = () => {
+        spinEnabled = !spinEnabled;
+        spinBtn.textContent = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
+        spinBtn.classList.toggle('btn-active');
+        if (spinEnabled) rotateGlobe();
+    };
+}
