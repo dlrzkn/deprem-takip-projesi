@@ -17,14 +17,18 @@
     </div>
 
     <div id="map"></div>
-    <div class="legend">
-        <h4>Sismik Şiddet</h4>
-        <div><span style="background: #2ecc71;"></span> M < 2.5</div>
-        <div><span style="background: #f1c40f;"></span> M 2.5 - 4.5</div>
-        <div><span style="background: #e67e22;"></span> M 4.5 - 6.0</div>
-        <div><span style="background: #e74c3c;"></span> M 6.0 - 8.0</div>
-        <div><span style="background: #8e44ad;"></span> M > 8.0</div>
-    </div>
+   <div class="legend">
+    <h4>Büyüklük (Mw)</h4>
+    <div><span style="background: #2ecc71;"></span> < 3.0 Mikro</div>
+    <div><span style="background: #f1c40f;"></span> 3.0 - 4.9 Küçük</div>
+    <div><span style="background: #e67e22;"></span> 5.0 - 5.9 Orta</div>
+    <div><span style="background: #d35400;"></span> 6.0 - 6.9 Güçlü</div>
+    <div><span style="background: #e74c3c;"></span> 7.0 - 7.9 Büyük</div>
+    <div><span style="background: #8e44ad;"></span> > 8.0 Mega</div>
+    <hr style="border: 0; border-top: 1px solid #333; margin: 8px 0;">
+    <div style="font-size: 10px; opacity: 0.6;">Kaynak: USGS / NEIC</div>
+</div>
+
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
     <script src="script.js" defer></script>
 </body>
