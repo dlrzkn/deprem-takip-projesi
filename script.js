@@ -39,14 +39,16 @@ async function updateQuakes() {
                         'interpolate', ['linear'], ['get', 'mag'],
                         0, 1.5, 2.5, 3, 4.5, 7, 6.0, 15, 8.0, 30, 10, 50
                     ],
-                    'circle-color': [
-                        'step', ['get', 'mag'],
-                        '#2ecc71', 2.5, '#f1c40f', 4.5, '#e67e22', 6.0, '#e74c3c', 8.0, '#8e44ad'
-                    ],
-                    'circle-opacity': 0.8,
-                    'circle-stroke-width': 1,
-                    'circle-stroke-color': '#ffffff'
-                }
+              'circle-color': [
+    'step', ['get', 'mag'],
+    '#2ecc71', 3.0,  // 3.0 altı yeşil
+    '#f1c40f', 5.0,  // 3.0 - 5.0 sarı
+    '#e67e22', 6.0,  // 5.0 - 6.0 turuncu
+    '#d35400', 7.0,  // 6.0 - 7.0 koyu turuncu
+    '#e74c3c', 8.0,  // 7.0 - 8.0 kırmızı
+    '#8e44ad'        // 8.0+ mor
+],
+
             });
 
             // --- POP-UP SİSTEMİ (GERİ GELDİ) ---
