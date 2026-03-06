@@ -7,125 +7,88 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; }
+        body { margin: 0; padding: 0; background: #1a1a1a; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        
-        /* Şık ve şeffaf lejant */
-        .legend {
-            background: rgba(25, 25, 25, 0.85);
-            color: #fff;
-            padding: 15px;
-            border-radius: 12px;
-            position: absolute;
-            bottom: 40px;
-            right: 20px;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px);
-            z-index: 10;
-        }
-        .legend h4 { margin: 0 0 10px; font-size: 14px; color: #ff9900; }
-        .legend div { display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; }
-        .legend span { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; }
-        
-        /* Popup tasarımı */
-        .mapboxgl-popup-content {
-            background: #1a1a1a;
-            color: #fff;
-            border-radius: 10px;
-            padding: 15px;
-        }
+        .legend { background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 10px; position: absolute; bottom: 40px; right: 20px; z-index: 10; font-family: sans-serif; border: 1px solid #444; }
+        .legend h4 { margin: 0 0 10px 0; color: #ff9900; }
+        .legend div { margin-bottom: 5px; font-size: 13px; }
     </style>
 </head>
 <body>
-
 <div id="map"></div>
 <div class="legend">
     <h4>Canlı Deprem Takibi</h4>
-    <div><span style="background-color: #00ff00;"></span> < 3.0 (Hafif)</div>
-    <div><span style="background-color: #ffff00;"></span> 3.0 - 5.0 (Orta)</div>
-    <div><span style="background-color: #ff0000;"></span> > 5.0 (Şiddetli)</div>
-    <div style="margin-top:10px; font-style:italic; opacity:0.7;">Veri: Kandilli & USGS</div>
+    <div><span style="color:#00ff00">●</span> < 3.0 (Hafif)</div>
+    <div><span style="color:#ffff00">●</span> 3.0 - 5.0 (Orta)</div>
+    <div><span style="color:#ff0000">●</span> > 5.0 (Şiddetli)</div>
+    <div style="font-size:10px; margin-top:10px; opacity:0.6">Kaynak: Kandilli & USGS</div>
 </div>
 
 <script>
-    // Güncel Token'ın
+    // Yeni paylaştığın Public Token
     mapboxgl.accessToken = 'Pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
     
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
         center: [35.2433, 38.9637],
-        zoom: 5.5,
-        projection: 'mercator' // Tablet performansı için mercator
+        zoom: 5,
+        projection: 'mercator' 
     });
-
-    // Kandilli verisini GeoJSON'a çeviren fonksiyon
-    async function getKandilli() {
-        const res = await fetch('https://api.orhanaydogdu.com.tr/deprem/kandilli/live');
-        const json = await res.json();
-        return {
-            type: 'FeatureCollection',
-            features: json.result.map(d => ({
-                type: 'Feature',
-                geometry: { type: 'Point', coordinates: [d.lng, d.lat] },
-                properties: { mag: d.mag, place: d.title, depth: d.depth, date: d.date }
-            }))
-        };
-    }
 
     map.on('load', async () => {
-        // Kandilli Kaynağı
-        const kData = await getKandilli();
-        map.addSource('kandilli', { type: 'geojson', data: kData });
+        // Kandilli verisini çekme fonksiyonu
+        async function updateData() {
+            try {
+                const res = await fetch('https://api.orhanaydogdu.com.tr/deprem/kandilli/live');
+                const data = await res.json();
+                
+                const geojson = {
+                    type: 'FeatureCollection',
+                    features: data.result.map(d => ({
+                        type: 'Feature',
+                        geometry: { type: 'Point', coordinates: [parseFloat(d.lng), parseFloat(d.lat)] },
+                        properties: { mag: d.mag, place: d.title, date: d.date }
+                    }))
+                };
 
-        // Görsel Şölen Katmanı: Kandilli (Daha parlak ve belirgin)
-        map.addLayer({
-            'id': 'kandilli-layer',
-            'type': 'circle',
-            'source': 'kandilli',
-            'paint': {
-                'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 4, 7, 25],
-                'circle-color': [
-                    'interpolate', ['linear'], ['get', 'mag'],
-                    2, '#00ff00',
-                    4, '#ffff00',
-                    6, '#ff0000'
-                ],
-                'circle-opacity': 0.8,
-                'circle-stroke-width': 2,
-                'circle-stroke-color': '#fff'
+                if (map.getSource('quakes')) {
+                    map.getSource('quakes').setData(geojson);
+                } else {
+                    map.addSource('quakes', { type: 'geojson', data: geojson });
+                    map.addLayer({
+                        id: 'quakes-layer',
+                        type: 'circle',
+                        source: 'quakes',
+                        paint: {
+                            'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 4, 7, 20],
+                            'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000'],
+                            'circle-opacity': 0.7,
+                            'circle-stroke-width': 1,
+                            'circle-stroke-color': '#fff'
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Veri hatası:", err);
             }
-        });
+        }
 
-        // Tıklayınca Bilgi Penceresi (Popup)
-        map.on('click', 'kandilli-layer', (e) => {
-            const props = e.features[0].properties;
+        // İlk veriyi yükle
+        await updateData();
+        
+        // Her 60 saniyede bir otomatik güncelle (Canlı Akış)
+        setInterval(updateData, 60000);
+
+        // Tıklama özelliği
+        map.on('click', 'quakes-layer', (e) => {
+            const p = e.features[0].properties;
             new mapboxgl.Popup()
                 .setLngLat(e.lngLat)
-                .setHTML(`
-                    <div style="text-align:center;">
-                        <b style="font-size:18px; color:#ff9900;">${props.mag}</b><br>
-                        <strong>${props.place}</strong><br>
-                        <small>${props.date}</small><br>
-                        <small>Derinlik: ${props.depth} km</small>
-                    </div>
-                `)
+                .setHTML(`<b>Büyüklük: ${p.mag}</b><br>${p.place}<br><small>${p.date}</small>`)
                 .addTo(map);
         });
-
-        // İmleç değişimi
-        map.on('mouseenter', 'kandilli-layer', () => map.getCanvas().style.cursor = 'pointer');
-        map.on('mouseleave', 'kandilli-layer', () => map.getCanvas().style.cursor = '');
-
-        // Her 1 dakikada bir veriyi yenile (Canlı Akış)
-        setInterval(async () => {
-            const newData = await getKandilli();
-            map.getSource('kandilli').setData(newData);
-            console.log('Veriler güncellendi');
-        }, 60000);
     });
 </script>
-
 </body>
 </html>
