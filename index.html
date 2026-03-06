@@ -7,9 +7,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="control-panel">
-        <button id="spin-btn" class="btn-toggle">Otomatik Dönüş: KAPALI</button>
+        <div class="control-panel">
+        <button id="spin-btn" class="btn-toggle btn-active">Otomatik Dönüş: AÇIK</button>
+        <div style="margin-top: 10px; display: flex; gap: 5px;">
+            <button class="btn-toggle" onclick="filterMag(0)">Hepsi</button>
+            <button class="btn-toggle" onclick="filterMag(4.5)">M 4.5+</button>
+            <button class="btn-toggle" onclick="filterMag(6.0)">M 6.0+</button>
+        </div>
     </div>
+
     <div id="map"></div>
     <div class="legend">
         <h4>Sismik Şiddet</h4>
