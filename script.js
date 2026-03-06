@@ -37,7 +37,15 @@ async function updateQuakes() {
                 type: 'circle',
                 source: 'usgs',
                 paint: {
-                    'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 2, 3, 5, 5, 12, 7, 25, 9, 45],
+                   'circle-radius': [
+    'interpolate', ['linear'], ['get', 'mag'],
+    1, 2,    // M 1.0 -> 2px
+    3, 4,    // M 3.0 -> 4px
+    5, 8,    // M 5.0 -> 8px
+    7, 16,   // M 7.0 -> 16px
+    9, 35    // M 9.0 -> 35px (Gerçekten büyük deprem fark edilsin)
+],
+
                     'circle-color': [
                         'step', ['get', 'mag'],
                         '#2ecc71', 3.0,
