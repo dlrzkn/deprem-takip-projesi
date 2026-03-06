@@ -8,11 +8,9 @@ const map = new mapboxgl.Map({
     projection: 'globe'
 });
 
-// Kontrolleri ekleyelim
 map.addControl(new mapboxgl.NavigationControl());
 
 map.on('load', () => {
-    // Atmosfer Ayarı
     map.setFog({
         'range': [1, 10],
         'color': '#000000',
@@ -21,88 +19,72 @@ map.on('load', () => {
         'star-intensity': 0.15
     });
 
-    // --- Akıllı Dönüş Sistemi ---
-    let userInteracting = false;
+    // --- BUTON VE DÖNÜŞ SİSTEMİ ---
     let spinEnabled = true;
+    const btn = document.querySelector('.rotation-button');
 
     function rotateGlobe() {
-        if (spinEnabled && !userInteracting) {
+        if (spinEnabled) {
             const center = map.getCenter();
-            center.lng -= 0.5; // Dönüş hızı
+            center.lng -= 0.5;
             map.easeTo({ center, duration: 1000, easing: (n) => n });
         }
     }
 
-    // Etkileşim olduğunda dönüşü durdurur (Zoom ve Drag için)
+    // Butona tıklandığında dönüşü aç/kapat
+    if (btn) {
+        btn.addEventListener('click', () => {
+            spinEnabled = !spinEnabled;
+            btn.innerHTML = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
+            btn.style.background = spinEnabled ? 'rgba(255, 165, 0, 0.2)' : 'rgba(255, 0, 0, 0.2)';
+            if (spinEnabled) rotateGlobe();
+        });
+    }
+
+    // Mouse ile müdahale edildiğinde dönüşü durdur (Yakınlaşmayı sağlar)
     map.on('movestart', (e) => {
-        if (e.originalEvent) userInteracting = true;
+        if (e.originalEvent) {
+            spinEnabled = false;
+            if (btn) btn.innerHTML = 'Otomatik Dönüş: KAPALI';
+        }
     });
 
     map.on('moveend', () => {
         rotateGlobe();
     });
 
-    // Haritaya dokunulduğunda veya tıklandığında kontrolü kullanıcıya bırak
-    map.on('mousedown', () => { userInteracting = true; });
-    map.on('touchstart', () => { userInteracting = true; });
-
     rotateGlobe();
 
-    // Veri Kaynağı
+    // --- VERİ VE GÖRSELLEŞTİRME ---
     map.addSource('quakes', {
         'type': 'geojson',
         'data': 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson'
     });
 
-    // Isı Haritası (Heatmap)
-    map.addLayer({
-        'id': 'quakes-heat',
-        'type': 'heatmap',
-        'source': 'quakes',
-        'paint': {
-            'heatmap-weight': ['interpolate', ['linear'], ['get', 'mag'], 0, 0, 6, 1],
-            'heatmap-opacity': 0.3
-        }
-    });
-
-    // Nokta Katmanı (Yeni Lejand Renkleriyle Tam Uyumlu)
     map.addLayer({
         'id': 'quakes-point',
         'type': 'circle',
         'source': 'quakes',
         'paint': {
-            'circle-radius': [
-                'interpolate', ['linear'], ['get', 'mag'],
-                1, 2,
-                3, 4,
-                5, 8,
-                7, 15,
-                9, 25
-            ],
+            'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 3, 5, 8, 8, 20],
             'circle-color': [
                 'step', ['get', 'mag'],
                 '#2ecc71', 3.0, '#f1c40f', 4.0, '#e67e22', 5.0, '#e74c3c', 6.0, '#c0392b', 7.0, '#96281b', 8.0, '#8e44ad'
             ],
-            'circle-stroke-color': 'white',
+            'circle-stroke-color': '#ffffff',
             'circle-stroke-width': 1,
             'circle-opacity': 0.8
         }
     });
 
-    // Popup Sistemi
+    // POPUP SİSTEMİ
     map.on('click', 'quakes-point', (e) => {
-        userInteracting = true; // Popup açılınca dünyayı durdur
         const coordinates = e.features[0].geometry.coordinates.slice();
-        const { mag, place, time } = e.features[0].properties;
+        const { mag, place } = e.features[0].properties;
 
         new mapboxgl.Popup({ offset: 10 })
             .setLngLat(coordinates)
-            .setHTML(`
-                <div style="color:#333; font-family:sans-serif; padding:5px;">
-                    <b style="font-size:1.2em; color:#e74c3c;">M ${mag.toFixed(1)}</b><br>
-                    <span>${place}</span>
-                </div>
-            `)
+            .setHTML(`<b>M ${mag.toFixed(1)}</b><br>${place}`)
             .addTo(map);
     });
 });
