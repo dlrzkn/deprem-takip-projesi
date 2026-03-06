@@ -8,7 +8,7 @@ const map = new mapboxgl.Map({
     projection: 'globe'
 });
 
-// 1. NAVİGASYON KONTROLLERİ (Pusula ve Zoom Okları)
+// Kontrolleri hemen ekleyelim
 map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
 let spinEnabled = true;
@@ -56,7 +56,7 @@ async function updateQuakes() {
     } catch (e) { console.error("Hata:", e); }
 }
 
-// 2. GARANTİLENMİŞ POP-UP SİSTEMİ (Harita üzerine tıklandığında)
+// --- POP-UP VE TIKLAMA (Geliştirilmiş Hassasiyet) ---
 map.on('click', (e) => {
     const features = map.queryRenderedFeatures(e.point, { layers: ['usgs-viz'] });
     
@@ -64,37 +64,32 @@ map.on('click', (e) => {
 
     const feature = features[0];
     const props = feature.properties;
+    const coords = feature.geometry.coordinates;
     const date = new Date(props.time).toLocaleString('tr-TR');
-    const depth = feature.geometry.coordinates[2];
 
     new mapboxgl.Popup({ offset: 15, closeButton: true })
-        .setLngLat(feature.geometry.coordinates)
+        .setLngLat(coords.length === 3 ? [coords[0], coords[1]] : coords)
         .setHTML(`
-            <div style="font-family: sans-serif; min-width: 200px; color: #333; padding: 5px;">
+            <div style="font-family: sans-serif; min-width: 200px; padding: 5px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
-                        M ${props.mag.toFixed(1)}
-                    </span>
+                    <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">M ${props.mag.toFixed(1)}</span>
                     <span style="color: #666; font-size: 11px;">${date}</span>
                 </div>
                 <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #2c3e50;">${props.place}</div>
                 <div style="background: #f8f9fa; padding: 8px; border-radius: 5px; font-size: 12px; margin-bottom: 10px; border: 1px solid #eee;">
-                    <b>Derinlik:</b> ${depth.toFixed(1)} km <br>
+                    <b>Derinlik:</b> ${coords[2] ? coords[2].toFixed(1) : '0'} km <br>
                     <b>Tür:</b> ${props.type.toUpperCase()}
                 </div>
-                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
-                    Detaylı İncele (USGS) →
-                </a>
+                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">USGS Detay Sayfası →</a>
             </div>
         `)
         .addTo(map);
 });
 
-// Fare imlecini değiştirme
 map.on('mousemove', 'usgs-viz', () => { map.getCanvas().style.cursor = 'pointer'; });
 map.on('mouseleave', 'usgs-viz', () => { map.getCanvas().style.cursor = ''; });
 
-// 3. AKICI DÖNÜŞ VE ETKİLEŞİM
+// --- DÖNÜŞ VE ZOOM PERFORMANSI ---
 function rotateGlobe() {
     if (spinEnabled && !userInteracting && map.getZoom() < 5) {
         const center = map.getCenter();
@@ -106,8 +101,8 @@ function rotateGlobe() {
 map.on('moveend', () => { if (!userInteracting && spinEnabled) rotateGlobe(); });
 map.on('mousedown', () => { userInteracting = true; });
 map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
-map.on('zoomstart', () => { userInteracting = true; });
-map.on('zoomend', () => { userInteracting = false; rotateGlobe(); });
+map.on('wheel', () => { userInteracting = true; setTimeout(() => { userInteracting = false; }, 2000); });
+map.on('touchstart', () => { userInteracting = true; });
 
 map.on('load', () => {
     updateQuakes();
@@ -115,10 +110,15 @@ map.on('load', () => {
     setInterval(updateQuakes, 60000);
 });
 
-// 4. FİLTRELEME
-window.filterMag = function(minMag) {
+// --- FİLTRELEME VE BUTON GÖRSELLİĞİ ---
+window.filterMag = function(minMag, btnElement) {
     if (map.getLayer('usgs-viz')) {
         map.setFilter('usgs-viz', ['>=', ['get', 'mag'], minMag]);
+        
+        // Tüm filtre butonlarından 'active' sınıfını kaldır
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('btn-active'));
+        // Tıklanan butona 'active' sınıfı ekle
+        btnElement.classList.add('btn-active');
     }
 };
 
@@ -127,7 +127,7 @@ if (spinBtn) {
     spinBtn.onclick = () => {
         spinEnabled = !spinEnabled;
         spinBtn.textContent = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
+        spinBtn.classList.toggle('btn-active', spinEnabled);
         if (spinEnabled) rotateGlobe();
     };
 }
-
