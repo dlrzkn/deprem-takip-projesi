@@ -11,7 +11,6 @@ const map = new mapboxgl.Map({
 map.addControl(new mapboxgl.NavigationControl());
 
 map.on('load', () => {
-    // Atmosfer Ayarları
     map.setFog({
         'range': [1, 10],
         'color': '#000000',
@@ -20,14 +19,14 @@ map.on('load', () => {
         'star-intensity': 0.2
     });
 
-    // --- BUTON VE DÖNÜŞ SİSTEMİ ---
-    let spinEnabled = false; // Başlangıçta kapalı
-    const btn = document.getElementById('spin-btn'); // ID Eşitlendi!
+    // --- DÖNÜŞ SİSTEMİ ---
+    let spinEnabled = false; 
+    const btn = document.getElementById('spin-btn');
 
     function rotateGlobe() {
         if (spinEnabled) {
             const center = map.getCenter();
-            center.lng -= 1.0;
+            center.lng -= 1.5; // Dönüş hızı
             map.easeTo({ center, duration: 1000, easing: (n) => n });
         }
     }
@@ -41,22 +40,22 @@ map.on('load', () => {
         };
     }
 
-    // Butona tıklandığında kesin çalışır
-    if (btn) {
-        btn.onclick = () => {
-            spinEnabled = !spinEnabled;
-            btn.innerHTML = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
-            btn.style.background = spinEnabled ? 'rgba(46, 204, 113, 0.8)' : 'rgba(231, 76, 60, 0.8)';
-            if (spinEnabled) rotateGlobe();
-        };
-    }
+    // Kullanıcı haritayı elle çevirmeye başladığında otomatik dönüşü durdur
+    map.on('movestart', (e) => {
+        if (e.originalEvent && spinEnabled) {
+            spinEnabled = false;
+            if (btn) {
+                btn.innerHTML = 'Otomatik Dönüş: KAPALI';
+                btn.style.background = 'rgba(231, 76, 60, 0.8)';
+            }
+        }
+    });
 
-    // Hareket bittiğinde eğer hala "AÇIK" ise dönmeye devam et
     map.on('moveend', () => {
         if (spinEnabled) rotateGlobe();
     });
 
-    // --- VERİ VE GÖRSELLEŞTİRME ---
+    // --- VERİ KAYNAĞI ---
     map.addSource('quakes', {
         'type': 'geojson',
         'data': 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson'
@@ -78,7 +77,7 @@ map.on('load', () => {
         }
     });
 
-    // --- ZENGİN POPUP İÇERİĞİ ---
+    // --- DETAYLI POPUP ---
     map.on('click', 'quakes-point', (e) => {
         const props = e.features[0].properties;
         const coords = e.features[0].geometry.coordinates;
@@ -87,17 +86,12 @@ map.on('load', () => {
         new mapboxgl.Popup({ offset: 15 })
             .setLngLat(coords)
             .setHTML(`
-                <div style="color:#222; font-family:sans-serif; padding:8px; line-height:1.5;">
-                    <div style="font-size:1.4em; font-weight:bold; color:#e74c3c; border-bottom:2px solid #eee; margin-bottom:8px;">
-                        Mw ${props.mag.toFixed(1)}
-                    </div>
-                    <div style="margin-bottom:5px;">📍 <b>Konum:</b> ${props.place}</div>
-                    <div style="margin-bottom:5px;">📏 <b>Derinlik:</b> ${coords[2].toFixed(1)} km</div>
-                    <div style="margin-bottom:5px;">🕒 <b>Zaman:</b> ${date}</div>
-                    <div style="margin-bottom:5px;">💥 <b>Şiddet Tipi:</b> ${props.magType || 'Mw'}</div>
-                    <div style="margin-top:10px; font-size:0.9em;">
-                        <a href="${props.url}" target="_blank" style="color:#3498db; text-decoration:none;">USGS Teknik Detaylar →</a>
-                    </div>
+                <div style="color:#222; font-family:sans-serif; padding:5px; min-width:200px;">
+                    <h3 style="margin:0; color:#e74c3c; border-bottom:1px solid #ddd;">Mw ${props.mag.toFixed(1)}</h3>
+                    <p style="margin:8px 0;">📍 <b>Konum:</b> ${props.place}</p>
+                    <p style="margin:4px 0;">📏 <b>Derinlik:</b> ${coords[2].toFixed(1)} km</p>
+                    <p style="margin:4px 0;">🕒 <b>Zaman:</b> ${date}</p>
+                    <a href="${props.url}" target="_blank" style="display:block; margin-top:10px; color:#3498db; text-decoration:none;">Teknik Detaylar (USGS) →</a>
                 </div>
             `)
             .addTo(map);
