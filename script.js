@@ -71,7 +71,7 @@ map.on('click', 'usgs-viz', (e) => {
     const date = new Date(props.time).toLocaleString('tr-TR');
     
     // USGS verisinde derinlik 3. koordinattır (index 2)
-    const depth = coords[2] !== undefined ? coords[2] : 0;
+    const depth = feature.geometry.coordinates[2] !== undefined ? feature.geometry.coordinates[2] : 0;
 
     new mapboxgl.Popup({ offset: 15, closeButton: true })
         .setLngLat([coords[0], coords[1]])
