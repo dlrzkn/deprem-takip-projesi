@@ -9,7 +9,6 @@ const map = new mapboxgl.Map({
 });
 
 map.on('load', () => {
-    // Atmosfer Ayarları
     map.setFog({
         'range': [1, 10],
         'color': '#000000',
@@ -18,27 +17,18 @@ map.on('load', () => {
         'star-intensity': 0.15
     });
 
-    // --- Otomatik Dönüş Sistemi (Gelişmiş) ---
-    const rotationSpeed = 1.2; // Dönüş hızı
-    let userInteracting = false;
-    let spinEnabled = true;
-
+    // --- Kesin Dönüş Sistemi ---
     function rotateGlobe() {
-        if (spinEnabled && !userInteracting) {
-            const distancePerSecond = rotationSpeed;
-            const center = map.getCenter();
-            center.lng -= distancePerSecond;
-            map.easeTo({ center, duration: 1000, easing: (n) => n });
-        }
-        requestAnimationFrame(rotateGlobe);
+        const center = map.getCenter();
+        center.lng -= 0.1;
+        map.easeTo({ center, duration: 10, easing: (n) => n });
     }
 
-    map.on('mousedown', () => { userInteracting = true; });
-    map.on('mouseup', () => { userInteracting = false; });
-    map.on('dragstart', () => { userInteracting = true; });
-    map.on('canvas', 'touchstart', () => { userInteracting = true; }); // Tablet için dokunma desteği
+    map.on('moveend', () => {
+        rotateGlobe();
+    });
 
-    rotateGlobe(); // Dönüşü başlat
+    rotateGlobe();
 
     // Veri Kaynağı
     map.addSource('quakes', {
@@ -61,44 +51,38 @@ map.on('load', () => {
         }
     });
 
-    // Nokta Katmanı (Popup için asıl katman)
+    // Nokta Katmanı
     map.addLayer({
         'id': 'quakes-point',
         'type': 'circle',
         'source': 'quakes',
         'paint': {
-            'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 4, 8, 30],
+            'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 3, 8, 25],
             'circle-color': ['step', ['get', 'mag'], '#2ecc71', 3.0, '#f1c40f', 4.0, '#e67e22', 5.0, '#e74c3c', 6.0, '#c0392b', 7.0, '#96281b', 8.0, '#8e44ad'],
             'circle-stroke-color': 'white',
-            'circle-stroke-width': 1.5,
+            'circle-stroke-width': 1,
             'circle-opacity': 0.9
         }
     });
 
-    // --- Popup (Bilgi Penceresi) Sistemi ---
+    // --- Kesin Popup Sistemi ---
     map.on('click', 'quakes-point', (e) => {
         const coordinates = e.features[0].geometry.coordinates.slice();
         const { mag, place, time } = e.features[0].properties;
         const dateString = new Date(time).toLocaleString('tr-TR');
 
-        // Küre üzerinde popup'ın doğru konumlanması için
-        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-        }
-
-        new mapboxgl.Popup({ offset: 15, closeButton: true })
+        new mapboxgl.Popup({ closeButton: true, offset: 15 })
             .setLngLat(coordinates)
             .setHTML(`
-                <div style="color: #333; font-family: sans-serif; padding: 10px; min-width: 150px;">
-                    <div style="font-size: 1.5em; font-weight: bold; color: #e74c3c; border-bottom: 1px solid #ddd; margin-bottom: 5px;">M ${mag.toFixed(1)}</div>
-                    <div style="font-size: 1em; margin-bottom: 8px;">📍 ${place}</div>
-                    <div style="font-size: 0.85em; color: #555;">📅 ${dateString}</div>
+                <div style="color: #333; padding: 5px;">
+                    <strong style="font-size: 1.2em; color: #e74c3c;">M ${mag.toFixed(1)}</strong><br>
+                    <span>${place}</span><br>
+                    <small>${dateString}</small>
                 </div>
             `)
             .addTo(map);
     });
 
-    // İmleç değişimi
     map.on('mouseenter', 'quakes-point', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'quakes-point', () => { map.getCanvas().style.cursor = ''; });
 });
