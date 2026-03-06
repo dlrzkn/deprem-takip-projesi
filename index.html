@@ -2,27 +2,44 @@
 <html lang="tr">
 <head>
     <meta charset="utf-8">
-    <title>Sismik İzleme Platformu | Canlı</title>
+    <title>Sismik İzleme Platformu | Pro</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
     <style>
         body { margin: 0; padding: 0; background: #000; overflow: hidden; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        .legend { background: rgba(0,0,0,0.85); color: #fff; padding: 15px; border-radius: 12px; position: absolute; bottom: 40px; right: 20px; font-family: sans-serif; border: 1px solid #444; z-index: 10; backdrop-filter: blur(5px); }
-        .legend h4 { margin: 0 0 10px 0; color: #ff9900; font-size: 14px; }
-        .legend div { display: flex; align-items: center; margin-bottom: 5px; font-size: 12px; }
-        .legend span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        
+        /* Şık ve şeffaf lejant */
+        .legend {
+            background: rgba(15, 15, 15, 0.8);
+            color: #fff;
+            padding: 15px;
+            border-radius: 15px;
+            position: absolute;
+            bottom: 40px;
+            right: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+        .legend h4 { margin: 0 0 10px 0; color: #ff9900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .legend div { display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; }
+        .legend span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 10px; box-shadow: 0 0 5px currentColor; }
     </style>
 </head>
 <body>
+
 <div id="map"></div>
 <div class="legend">
-    <h4>Canlı Deprem Takibi</h4>
-    <div><span style="background: #00ff00;"></span> < 3.0 Hafif</div>
-    <div><span style="background: #ffff00;"></span> 3.0 - 5.0 Orta</div>
-    <div><span style="background: #ff0000;"></span> > 5.0 Şiddetli</div>
-    <div style="font-size:10px; margin-top:10px; opacity:0.6">Otomatik Dönüş Aktif</div>
+    <h4>Sismik Veri Akışı</h4>
+    <div><span style="background: #00ff00; color: #00ff00;"></span> < 3.0 Hafif</div>
+    <div><span style="background: #ffff00; color: #ffff00;"></span> 3.0 - 5.0 Orta</div>
+    <div><span style="background: #ff0000; color: #ff0000;"></span> > 5.0 Şiddetli</div>
+    <div style="font-size:10px; margin-top:10px; opacity:0.5; border-top: 1px solid #333; pt: 5px;">
+        Veri: Kandilli Rasathanesi<br>Mod: Akıllı Küre (3D)
+    </div>
 </div>
 
 <script>
@@ -36,30 +53,35 @@
         projection: 'globe'
     });
 
-    // Atmosfer ve Dönüş Ayarları
+    let userInteracting = false;
+    let spinEnabled = true;
+
     map.on('style.load', () => {
         map.setFog({
-            'color': 'rgb(18, 24, 33)',
-            'high-color': 'rgb(36, 92, 223)',
-            'horizon-blend': 0.02,
+            'color': 'rgb(15, 20, 30)',
+            'high-color': 'rgb(30, 60, 150)',
+            'horizon-blend': 0.015,
             'space-color': 'rgb(0, 0, 0)',
-            'star-intensity': 0.6
+            'star-intensity': 0.5
         });
     });
 
-    // Otomatik Dönüş Fonksiyonu
+    // Akıllı Dönüş Fonksiyonu
     function rotateGlobe() {
         const zoom = map.getZoom();
-        if (zoom < 5) {
-            const center = map.getCenter();
-            center.lng -= 0.1; 
+        if (spinEnabled && !userInteracting && zoom < 5) {
+            let center = map.getCenter();
+            center.lng -= 0.15; // Dönüş hızı
             map.easeTo({ center, duration: 1000, easing: (t) => t });
         }
     }
 
-    map.on('moveend', () => {
-        rotateGlobe();
-    });
+    // Etkileşim Kontrolleri (Tablet ve Mouse Uyumu)
+    map.on('mousedown', () => { userInteracting = true; });
+    map.on('touchstart', () => { userInteracting = true; });
+    map.on('mouseup', () => { userInteracting = false; });
+    map.on('touchend', () => { userInteracting = false; });
+    map.on('moveend', () => { rotateGlobe(); });
 
     async function updateQuakes() {
         try {
@@ -79,27 +101,27 @@
             } else {
                 map.addSource('quakes', { type: 'geojson', data: geojson });
                 
-                // Nabız (Pulse) Efekti Katmanı
+                // Arka Plan Nabız Efekti
                 map.addLayer({
-                    id: 'quakes-viz',
+                    id: 'quakes-pulse',
                     type: 'circle',
                     source: 'quakes',
                     paint: {
-                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 8, 7, 40],
+                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 10, 7, 50],
                         'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000'],
-                        'circle-opacity': 0.2,
-                        'circle-stroke-width': 2,
+                        'circle-opacity': 0.15,
+                        'circle-stroke-width': 1.5,
                         'circle-stroke-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000']
                     }
                 });
 
-                // Ana Nokta Katmanı
+                // Merkez Nokta
                 map.addLayer({
                     id: 'quakes-point',
                     type: 'circle',
                     source: 'quakes',
                     paint: {
-                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 3, 7, 15],
+                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 3, 7, 12],
                         'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000'],
                         'circle-stroke-width': 1,
                         'circle-stroke-color': '#fff'
@@ -107,26 +129,36 @@
                 });
             }
         } catch (err) {
-            console.error("Veri hatası:", err);
+            console.error("Veri senkronizasyon hatası:", err);
         }
     }
 
     map.on('load', () => {
         updateQuakes();
         rotateGlobe();
-        setInterval(updateQuakes, 30000);
+        setInterval(updateQuakes, 60000); // 1 dakikada bir veri güncelleme
     });
 
+    // Bilgi Penceresi (Popup)
     map.on('click', 'quakes-point', (e) => {
         const p = e.features[0].properties;
-        new mapboxgl.Popup()
+        new mapboxgl.Popup({ closeButton: false, className: 'quake-popup' })
             .setLngLat(e.lngLat)
-            .setHTML(`<div style="color:#000"><b>${p.mag} Büyüklüğünde</b><br>${p.place}<br><small>${p.date}</small><br><small>Derinlik: ${p.depth}km</small></div>`)
+            .setHTML(`
+                <div style="font-family: sans-serif; padding: 5px;">
+                    <strong style="font-size: 14px; color: #e67e22;">${p.mag} ML</strong><br>
+                    <span style="font-size: 12px; font-weight: bold;">${p.place}</span><br>
+                    <span style="font-size: 11px; color: #666;">${p.date}</span><br>
+                    <span style="font-size: 11px; color: #666;">Derinlik: ${p.depth} km</span>
+                </div>
+            `)
             .addTo(map);
     });
 
     map.on('mouseenter', 'quakes-point', () => map.getCanvas().style.cursor = 'pointer');
     map.on('mouseleave', 'quakes-point', () => map.getCanvas().style.cursor = '');
+
 </script>
 </body>
 </html>
+
