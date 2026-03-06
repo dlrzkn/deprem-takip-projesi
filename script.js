@@ -88,7 +88,7 @@ function rotateGlobe() {
     if (spinEnabled && !userInteracting && map.getZoom() < 5) {
         const center = map.getCenter();
         center.lng -= 0.1;
-        map.easeTo({ center, duration: 1000, easing: (t) => t });
+        map.easeTo({ center, duration: 2000, easing: (t) => t });
     }
 }
 
