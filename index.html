@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <title>Sismik İzleme Platformu</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        
+        /* Görsel Şölen: Sağ alt köşeye şık bir lejant */
+        .legend {
+            background-color: rgba(30, 30, 30, 0.9);
+            color: white;
+            border-radius: 10px;
+            bottom: 30px;
+            right: 10px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 15px;
+            position: absolute;
+            z-index: 1;
+            border: 1px solid #444;
+        }
+        .legend h4 { margin: 0 0 10px; font-size: 14px; color: #ff9900; }
+        .legend div { display: flex; align-items: center; margin-bottom: 5px; }
+        .legend span { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="legend">
+    <h4>Deprem Büyüklüğü (Mag)</h4>
+    <div><span style="background-color: #00ff00;"></span> 0 - 3.0 (Hafif)</div>
+    <div><span style="background-color: #ffff00;"></span> 3.0 - 5.0 (Orta)</div>
+    <div><span style="background-color: #ff0000;"></span> 5.0+ (Şiddetli)</div>
+</div>
+
+<script>
+    // Senin paylaştığın token
+    mapboxgl.accessToken = 'Pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWVydGl4NTAwaXgycXMwM3hycDlrOTkifQ.b9YLPNJcXhJkJUC16JIPtA';
+    
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/dark-v11', // Karanlık ve profesyonel tema
+        center: [35.2433, 38.9637], // Türkiye merkezli odak
+        zoom: 5,
+        projection: 'globe' // Dünyayı küre şeklinde gösterir
+    });
+
+    map.on('style.load', () => {
+        map.setFog({}); // Atmosferik sis efekti ekler
+    });
+
+    map.on('load', () => {
+        // USGS Son 24 Saatlik Canlı Deprem Verisi
+        map.addSource('earthquakes', {
+            type: 'geojson',
+            data: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson'
+        });
+
+        // Deprem Katmanı Görselleştirmesi
+        map.addLayer({
+            'id': 'quakes-point',
+            'type': 'circle',
+            'source': 'earthquakes',
+            'paint': {
+                // Mühendislik Dokunuşu: Büyüklüğe (mag) göre dinamik yarıçap
+                'circle-radius': [
+                    'interpolate', ['linear'], ['get', 'mag'],
+                    1, 3,
+                    8, 25
+                ],
+                // Büyüklüğe göre renk geçişi
+                'circle-color': [
+                    'interpolate', ['linear'], ['get', 'mag'],
+                    2, '#00ff00',
+                    4, '#ffff00',
+                    6, '#ff0000'
+                ],
+                'circle-opacity': 0.8,
+                'circle-stroke-width': 1,
+                'circle-stroke-color': '#ffffff'
+            }
+        });
+
+        // Tıklama özelliği (Popup)
+        map.on('click', 'quakes-point', (e) => {
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const { mag, place, time } = e.features[0].properties;
+            const date = new Date(time).toLocaleString('tr-TR');
+
+            new mapboxgl.Popup({ className: 'custom-popup' })
+                .setLngLat(coordinates)
+                .setHTML(`
+                    <div style="color: #333; padding: 5px;">
+                        <b style="font-size: 16px;">Müşterek Veri (USGS)</b><br>
+                        <strong>Büyüklük:</strong> ${mag}<br>
+                        <strong>Yer:</strong> ${place}<br>
+                        <strong>Zaman:</strong> ${date}
+                    </div>
+                `)
+                .addTo(map);
+        });
+
+        // Mouse imlecini değiştirme
+        map.on('mouseenter', 'quakes-point', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'quakes-point', () => { map.getCanvas().style.cursor = ''; });
+    });
+</script>
+
+</body>
+</html>
+
