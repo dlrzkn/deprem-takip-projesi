@@ -7,19 +7,22 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
     <style>
-        body { margin: 0; padding: 0; background: #000; }
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        .legend { background: rgba(0,0,0,0.85); color: #fff; padding: 15px; border-radius: 10px; position: absolute; bottom: 40px; right: 20px; font-family: sans-serif; border: 1px solid #444; z-index: 10; }
-        .legend h4 { margin: 0 0 10px 0; color: #ff9900; }
+        .legend { background: rgba(0,0,0,0.85); color: #fff; padding: 15px; border-radius: 12px; position: absolute; bottom: 40px; right: 20px; font-family: sans-serif; border: 1px solid #444; z-index: 10; backdrop-filter: blur(5px); }
+        .legend h4 { margin: 0 0 10px 0; color: #ff9900; font-size: 14px; }
+        .legend div { display: flex; align-items: center; margin-bottom: 5px; font-size: 12px; }
+        .legend span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
     </style>
 </head>
 <body>
 <div id="map"></div>
 <div class="legend">
     <h4>Canlı Deprem Takibi</h4>
-    <div><span style="color:#00ff00">●</span> < 3.0</div>
-    <div><span style="color:#ffff00">●</span> 3.0 - 5.0</div>
-    <div><span style="color:#ff0000">●</span> > 5.0</div>
+    <div><span style="background: #00ff00;"></span> < 3.0 Hafif</div>
+    <div><span style="background: #ffff00;"></span> 3.0 - 5.0 Orta</div>
+    <div><span style="background: #ff0000;"></span> > 5.0 Şiddetli</div>
+    <div style="font-size:10px; margin-top:10px; opacity:0.6">Otomatik Dönüş Aktif</div>
 </div>
 
 <script>
@@ -29,16 +32,33 @@
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
         center: [35.2433, 38.9637],
-        zoom: 2, // Küre görünümü için biraz uzaklaştırdım
-        projection: 'globe' // İŞTE BURASI DÜNYAYI KÜRE YAPAR
+        zoom: 2,
+        projection: 'globe'
     });
 
+    // Atmosfer ve Dönüş Ayarları
     map.on('style.load', () => {
         map.setFog({
-            'color': 'rgb(186, 210, 235)', // Atmosfer rengi
-            'high-color': 'rgb(36, 92, 223)', // Uzay rengi
-            'horizon-blend': 0.02
+            'color': 'rgb(18, 24, 33)',
+            'high-color': 'rgb(36, 92, 223)',
+            'horizon-blend': 0.02,
+            'space-color': 'rgb(0, 0, 0)',
+            'star-intensity': 0.6
         });
+    });
+
+    // Otomatik Dönüş Fonksiyonu
+    function rotateGlobe() {
+        const zoom = map.getZoom();
+        if (zoom < 5) {
+            const center = map.getCenter();
+            center.lng -= 0.1; 
+            map.easeTo({ center, duration: 1000, easing: (t) => t });
+        }
+    }
+
+    map.on('moveend', () => {
+        rotateGlobe();
     });
 
     async function updateQuakes() {
@@ -50,7 +70,7 @@
                 features: data.result.map(d => ({
                     type: 'Feature',
                     geometry: { type: 'Point', coordinates: [parseFloat(d.lng), parseFloat(d.lat)] },
-                    properties: { mag: d.mag, place: d.title, date: d.date }
+                    properties: { mag: d.mag, place: d.title, date: d.date, depth: d.depth }
                 }))
             };
 
@@ -58,36 +78,55 @@
                 map.getSource('quakes').setData(geojson);
             } else {
                 map.addSource('quakes', { type: 'geojson', data: geojson });
+                
+                // Nabız (Pulse) Efekti Katmanı
                 map.addLayer({
-                    id: 'quakes-layer',
+                    id: 'quakes-viz',
                     type: 'circle',
                     source: 'quakes',
                     paint: {
-                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 4, 7, 20],
+                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 8, 7, 40],
                         'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000'],
-                        'circle-opacity': 0.8,
+                        'circle-opacity': 0.2,
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000']
+                    }
+                });
+
+                // Ana Nokta Katmanı
+                map.addLayer({
+                    id: 'quakes-point',
+                    type: 'circle',
+                    source: 'quakes',
+                    paint: {
+                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 3, 7, 15],
+                        'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000'],
                         'circle-stroke-width': 1,
                         'circle-stroke-color': '#fff'
                     }
                 });
             }
         } catch (err) {
-            console.error("Veri alınamadı:", err);
+            console.error("Veri hatası:", err);
         }
     }
 
     map.on('load', () => {
         updateQuakes();
+        rotateGlobe();
         setInterval(updateQuakes, 30000);
     });
 
-    map.on('click', 'quakes-layer', (e) => {
+    map.on('click', 'quakes-point', (e) => {
         const p = e.features[0].properties;
         new mapboxgl.Popup()
             .setLngLat(e.lngLat)
-            .setHTML(`<b>${p.mag}</b> - ${p.place}<br><small>${p.date}</small>`)
+            .setHTML(`<div style="color:#000"><b>${p.mag} Büyüklüğünde</b><br>${p.place}<br><small>${p.date}</small><br><small>Derinlik: ${p.depth}km</small></div>`)
             .addTo(map);
     });
+
+    map.on('mouseenter', 'quakes-point', () => map.getCanvas().style.cursor = 'pointer');
+    map.on('mouseleave', 'quakes-point', () => map.getCanvas().style.cursor = '');
 </script>
 </body>
 </html>
