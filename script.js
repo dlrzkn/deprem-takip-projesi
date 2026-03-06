@@ -19,11 +19,11 @@ map.on('style.load', () => {
     });
 });
 
-// Akıcı ve Yavaş Dönüş Mantığı
+// Kesintisiz Dönüş Fonksiyonu
 function rotateGlobe() {
     if (spinEnabled && !userInteracting && map.getZoom() < 5) {
         const center = map.getCenter();
-        center.lng -= 0.1; // Çok sakin ve profesyonel bir hız
+        center.lng -= 0.5; // Hız ayarı: 0.5 daha akıcıdır
         map.easeTo({ 
             center, 
             duration: 1000, 
@@ -33,18 +33,19 @@ function rotateGlobe() {
     }
 }
 
-// Her hareket bittiğinde dönüşü tekrar tetikle (Sonsuz Döngü)
+// Harita her hareketini bitirdiğinde (1 saniyelik easeTo bittiğinde) tekrar çalıştır
 map.on('moveend', () => {
-    rotateGlobe();
+    if (spinEnabled && !userInteracting) {
+        rotateGlobe();
+    }
 });
 
-// Etkileşim Yönetimi
+// Etkileşim Yönetimi (Elle müdahale edilince durur)
 map.on('mousedown', () => { userInteracting = true; });
 map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
 map.on('touchstart', () => { userInteracting = true; });
 map.on('touchend', () => { userInteracting = false; rotateGlobe(); });
 
-// Veri Güncelleme
 async function updateQuakes() {
     try {
         const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
@@ -66,8 +67,8 @@ async function updateQuakes() {
                     'circle-stroke-color': '#ffffff'
                 }
             });
-            
-            // Pop-up kurulumu
+
+            // Tıklama Olayı (Pop-up)
             map.on('click', 'usgs-viz', (e) => {
                 const props = e.features[0].properties;
                 const date = new Date(props.time).toLocaleString('tr-TR');
@@ -85,14 +86,12 @@ async function updateQuakes() {
     } catch (e) { console.error(e); }
 }
 
-// Başlatma
 map.on('load', () => {
     updateQuakes();
-    rotateGlobe(); // İlk dönüşü başlat
+    rotateGlobe(); // İlk hareketi başlat
     setInterval(updateQuakes, 60000);
 });
 
-// Buton Kontrolü
 const spinBtn = document.getElementById('spin-btn');
 if (spinBtn) {
     spinBtn.onclick = () => {
