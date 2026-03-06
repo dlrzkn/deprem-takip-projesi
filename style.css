@@ -3,11 +3,10 @@ body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: s
 
 .control-panel { position: absolute; top: 20px; left: 20px; z-index: 10; }
 .btn-toggle {
-    background: rgba(25, 25, 25, 0.9); color: #ff9900; border: 1px solid #444;
+    background: rgba(25, 25, 25, 0.9); color: #fff; border: 1px solid #444;
     padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 12px;
     font-weight: bold; backdrop-filter: blur(8px); transition: 0.3s;
 }
-.btn-active { border-color: #ff9900; box-shadow: 0 0 10px rgba(255, 153, 0, 0.3); }
 
 .legend {
     background: rgba(15, 15, 15, 0.9); color: #fff; padding: 15px;
