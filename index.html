@@ -2,13 +2,36 @@
 <html lang="tr">
 <head>
     <meta charset="utf-8">
-    <title>Sismik İzleme Platformu | Akıcı</title>
+    <title>Sismik İzleme Platformu | Kontrol Paneli</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
     <style>
         body { margin: 0; padding: 0; background: #000; overflow: hidden; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        
+        /* Kontrol Butonu */
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+        .btn-toggle {
+            background: rgba(25, 25, 25, 0.8);
+            color: #ff9900;
+            border: 1px solid #444;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: sans-serif;
+            font-size: 12px;
+            backdrop-filter: blur(5px);
+            transition: 0.3s;
+        }
+        .btn-toggle:hover { background: rgba(50, 50, 50, 0.9); }
+        .btn-active { border-color: #ff9900; box-shadow: 0 0 10px rgba(255, 153, 0, 0.3); }
+
         .legend {
             background: rgba(15, 15, 15, 0.85);
             color: #fff;
@@ -29,6 +52,10 @@
 </head>
 <body>
 
+<div class="control-panel">
+    <button id="spin-btn" class="btn-toggle btn-active">Otomatik Dönüş: AÇIK</button>
+</div>
+
 <div id="map"></div>
 <div class="legend">
     <h4>Sismik Akış</h4>
@@ -44,12 +71,13 @@
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
         center: [35, 39],
-        zoom: 1.8,
+        zoom: 2,
         projection: 'globe'
     });
 
+    let spinEnabled = true;
     let userInteracting = false;
-    const rotationSpeed = 0.8; // Dönüş hızı (Artırıldı)
+    const rotationSpeed = 1.2; // Gözle görülür hız artışı
 
     map.on('style.load', () => {
         map.setFog({
@@ -61,14 +89,23 @@
     });
 
     function rotateGlobe() {
-        if (!userInteracting && map.getZoom() < 5) {
+        if (spinEnabled && !userInteracting && map.getZoom() < 5) {
             const center = map.getCenter();
             center.lng -= rotationSpeed;
             map.easeTo({ center, duration: 1000, easing: (t) => t });
         }
     }
 
-    // Etkileşim Yönetimi
+    // Buton Kontrolü
+    const spinBtn = document.getElementById('spin-btn');
+    spinBtn.onclick = () => {
+        spinEnabled = !spinEnabled;
+        spinBtn.textContent = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
+        spinBtn.classList.toggle('btn-active');
+        if (spinEnabled) rotateGlobe();
+    };
+
+    // Etkileşim Yönetimi (Mouse/Touch)
     map.on('mousedown', () => { userInteracting = true; });
     map.on('touchstart', () => { userInteracting = true; });
     map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
@@ -97,9 +134,9 @@
                     type: 'circle',
                     source: 'quakes',
                     paint: {
-                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 5, 7, 30],
+                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 4, 7, 25],
                         'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000'],
-                        'circle-opacity': 0.6,
+                        'circle-opacity': 0.7,
                         'circle-stroke-width': 1,
                         'circle-stroke-color': '#fff'
                     }
@@ -124,3 +161,4 @@
 </script>
 </body>
 </html>
+
