@@ -9,23 +9,47 @@
 </head>
 <body>
     <div class="control-panel">
-        <button id="spin-btn" class="btn-toggle btn-active">Otomatik Dönüş: AÇIK</button>
+        <button id="spin-btn" class="btn-toggle">Otomatik Dönüş: KAPALI</button>
     </div>
-    <div id="map"></div>
-    <div class="legend">
-        <h4>Mw (24s)</h4>
-                <div><span style="background: #2ecc71;"></span> M < 3.0 (Mikro)</div>
-        <div><span style="background: #f1c40f;"></span> M 3.0 - 3.9 (Küçük)</div>
-        <div><span style="background: #e67e22;"></span> M 4.0 - 4.9 (Hafif)</div>
-        <div><span style="background: #e74c3c;"></span> M 5.0 - 5.9 (Orta)</div>
-        <div><span style="background: #c0392b;"></span> M 6.0 - 6.9 (Güçlü)</div>
-        <div><span style="background: #96281b;"></span> M 7.0 - 7.9 (Büyük)</div>
-        <div><span style="background: #8e44ad;"></span> M > 8.0 (Mega)</div>
 
-        <hr style="border: 0; border-top: 1px solid #333; margin: 8px 0;">
-        <div style="font-size: 10px; opacity: 0.6;">Kaynak: USGS</div>
+    <div id="map"></div>
+
+    <div class="legend" id="legend">
+        <div class="legend-header" onclick="toggleLegend()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0;">Mw (24s)</h4>
+            <span id="legend-arrow">▼</span>
+        </div>
+        
+        <div id="legend-content">
+            <hr style="border: 0; border-top: 1px solid #444; margin: 8px 0;">
+            <div><span style="background: #2ecc71;"></span> M < 3.0 (Mikro)</div>
+            <div><span style="background: #f1c40f;"></span> M 3.0 - 3.9 (Küçük)</div>
+            <div><span style="background: #e67e22;"></span> M 4.0 - 4.9 (Hafif)</div>
+            <div><span style="background: #e74c3c;"></span> M 5.0 - 5.9 (Orta)</div>
+            <div><span style="background: #c0392b;"></span> M 6.0 - 6.9 (Güçlü)</div>
+            <div><span style="background: #96281b;"></span> M 7.0 - 7.9 (Büyük)</div>
+            <div><span style="background: #8e44ad;"></span> M > 8.0 (Mega)</div>
+            <hr style="border: 0; border-top: 1px solid #333; margin: 8px 0;">
+            <div style="font-size: 10px; opacity: 0.6;">Kaynak: USGS</div>
+        </div>
     </div>
+
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
     <script src="script.js" defer></script>
+
+    <script>
+        // Lejandı açıp kapatan fonksiyon
+        function toggleLegend() {
+            const content = document.getElementById('legend-content');
+            const arrow = document.getElementById('legend-arrow');
+            if (content.style.display === "none") {
+                content.style.display = "block";
+                arrow.innerHTML = "▼";
+            } else {
+                content.style.display = "none";
+                arrow.innerHTML = "▲";
+            }
+        }
+    </script>
 </body>
 </html>
