@@ -8,6 +8,9 @@ const map = new mapboxgl.Map({
     projection: 'globe'
 });
 
+// --- NAVİGASYON KONTROLLERİ (Zoom in/out ve Pusula) ---
+map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
 let spinEnabled = true;
 let userInteracting = false;
 
@@ -36,7 +39,7 @@ async function updateQuakes() {
                 paint: {
                     'circle-radius': [
                         'interpolate', ['linear'], ['get', 'mag'],
-                        0, 1.5, 2.5, 3, 4.5, 7, 6.0, 15, 8.0, 30, 10, 50
+                        0, 2, 3, 5, 5, 12, 7, 25, 9, 45
                     ],
                     'circle-color': [
                         'step', ['get', 'mag'],
@@ -53,41 +56,33 @@ async function updateQuakes() {
                 }
             });
         }
-    } catch (e) { console.error("Veri güncelleme hatası:", e); }
+    } catch (e) { console.error("Veri hatası:", e); }
 }
 
-// --- POP-UP SİSTEMİ (updateQuakes dışına, harita yüklendiğinde bir kez çalışacak şekilde) ---
+// --- POP-UP VE TIKLAMA OLAYI (GARANTİLENMİŞ YAPI) ---
 map.on('click', 'usgs-viz', (e) => {
     const props = e.features[0].properties;
     const coords = e.features[0].geometry.coordinates;
     const date = new Date(props.time).toLocaleString('tr-TR');
-    const depth = coords[2]; // Derinlik verisi
+    const depth = coords[2];
 
-    new mapboxgl.Popup({ offset: 10, closeButton: true })
+    new mapboxgl.Popup({ offset: 15, closeButton: true })
         .setLngLat(e.lngLat)
         .setHTML(`
-            <div style="font-family: sans-serif; padding: 5px; min-width: 200px;">
+            <div style="font-family: sans-serif; min-width: 200px; color: #333;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 14px;">
+                    <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
                         M ${props.mag.toFixed(1)}
                     </span>
                     <span style="color: #666; font-size: 11px;">${date}</span>
                 </div>
-                <div style="font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 10px; line-height: 1.3;">
-                    ${props.place}
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">${props.place}</div>
+                <div style="background: #f1f1f1; padding: 8px; border-radius: 5px; font-size: 12px; margin-bottom: 10px;">
+                    <b>Derinlik:</b> ${depth.toFixed(1)} km <br>
+                    <b>Tür:</b> ${props.type.toUpperCase()}
                 </div>
-                <div style="background: #f8f9fa; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
-                        <span style="color: #7f8c8d;">Derinlik:</span>
-                        <span style="font-weight: bold; color: #2c3e50;">${depth.toFixed(1)} km</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px;">
-                        <span style="color: #7f8c8d;">Tür:</span>
-                        <span style="font-weight: bold; color: #2c3e50;">${props.type.toUpperCase()}</span>
-                    </div>
-                </div>
-                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 6px; border-radius: 4px; font-size: 12px;">
-                    Detaylı İncele (USGS) →
+                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #2c3e50; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 12px;">
+                    USGS Detay Sayfası →
                 </a>
             </div>
         `)
@@ -97,7 +92,7 @@ map.on('click', 'usgs-viz', (e) => {
 map.on('mouseenter', 'usgs-viz', () => map.getCanvas().style.cursor = 'pointer');
 map.on('mouseleave', 'usgs-viz', () => map.getCanvas().style.cursor = '');
 
-// --- DÖNÜŞ VE KONTROL SİSTEMİ ---
+// --- DÖNÜŞ VE KONTROL ---
 function rotateGlobe() {
     if (spinEnabled && !userInteracting && map.getZoom() < 5) {
         const center = map.getCenter();
