@@ -78,25 +78,23 @@ map.on('load', () => {
     });
 
     // --- DETAYLI POPUP ---
-    map.on('click', 'quakes-point', (e) => {
-        const props = e.features[0].properties;
-        const coords = e.features[0].geometry.coordinates;
-        const date = new Date(props.time).toLocaleString('tr-TR');
+    body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: sans-serif; }
+#map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
-        new mapboxgl.Popup({ offset: 15 })
-            .setLngLat(coords)
-            .setHTML(`
-                <div style="color:#222; font-family:sans-serif; padding:5px; min-width:200px;">
-                    <h3 style="margin:0; color:#e74c3c; border-bottom:1px solid #ddd;">Mw ${props.mag.toFixed(1)}</h3>
-                    <p style="margin:8px 0;">📍 <b>Konum:</b> ${props.place}</p>
-                    <p style="margin:4px 0;">📏 <b>Derinlik:</b> ${coords[2].toFixed(1)} km</p>
-                    <p style="margin:4px 0;">🕒 <b>Zaman:</b> ${date}</p>
-                    <a href="${props.url}" target="_blank" style="display:block; margin-top:10px; color:#3498db; text-decoration:none;">Teknik Detaylar (USGS) →</a>
-                </div>
-            `)
-            .addTo(map);
-    });
+.control-panel { position: absolute; top: 20px; left: 20px; z-index: 10; }
+.btn-toggle {
+    background: rgba(25, 25, 25, 0.9); color: #ff9900; border: 1px solid #444;
+    padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 12px;
+    font-weight: bold; backdrop-filter: blur(8px); transition: 0.3s;
+}
+.btn-active { border-color: #ff9900; box-shadow: 0 0 10px rgba(255, 153, 0, 0.3); }
 
-    map.on('mouseenter', 'quakes-point', () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', 'quakes-point', () => { map.getCanvas().style.cursor = ''; });
-});
+.legend {
+    background: rgba(15, 15, 15, 0.9); color: #fff; padding: 15px;
+    border-radius: 12px; position: absolute; bottom: 40px; right: 20px;
+    border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); z-index: 10;
+}
+.legend h4 { margin: 0 0 10px 0; color: #ff9900; font-size: 14px; }
+.legend div { display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; }
+.legend span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 10px; }
+
