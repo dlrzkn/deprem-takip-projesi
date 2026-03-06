@@ -7,87 +7,85 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
     <style>
-        body { margin: 0; padding: 0; background: #1a1a1a; }
+        body { margin: 0; padding: 0; background: #000; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        .legend { background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 10px; position: absolute; bottom: 40px; right: 20px; z-index: 10; font-family: sans-serif; border: 1px solid #444; }
+        .legend { background: rgba(0,0,0,0.85); color: #fff; padding: 15px; border-radius: 10px; position: absolute; bottom: 40px; right: 20px; font-family: sans-serif; border: 1px solid #444; z-index: 10; }
         .legend h4 { margin: 0 0 10px 0; color: #ff9900; }
-        .legend div { margin-bottom: 5px; font-size: 13px; }
     </style>
 </head>
 <body>
 <div id="map"></div>
 <div class="legend">
     <h4>Canlı Deprem Takibi</h4>
-    <div><span style="color:#00ff00">●</span> < 3.0 (Hafif)</div>
-    <div><span style="color:#ffff00">●</span> 3.0 - 5.0 (Orta)</div>
-    <div><span style="color:#ff0000">●</span> > 5.0 (Şiddetli)</div>
+    <div><span style="color:#00ff00">●</span> < 3.0</div>
+    <div><span style="color:#ffff00">●</span> 3.0 - 5.0</div>
+    <div><span style="color:#ff0000">●</span> > 5.0</div>
     <div style="font-size:10px; margin-top:10px; opacity:0.6">Kaynak: Kandilli & USGS</div>
 </div>
 
 <script>
-    // Yeni paylaştığın Public Token
-    mapboxgl.accessToken = 'Pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
+    // Token'ın doğruluğundan emin ol
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
     
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
         center: [35.2433, 38.9637],
         zoom: 5,
-        projection: 'mercator' 
+        projection: 'mercator'
     });
 
-    map.on('load', async () => {
-        // Kandilli verisini çekme fonksiyonu
-        async function updateData() {
-            try {
-                const res = await fetch('https://api.orhanaydogdu.com.tr/deprem/kandilli/live');
-                const data = await res.json();
-                
-                const geojson = {
-                    type: 'FeatureCollection',
-                    features: data.result.map(d => ({
-                        type: 'Feature',
-                        geometry: { type: 'Point', coordinates: [parseFloat(d.lng), parseFloat(d.lat)] },
-                        properties: { mag: d.mag, place: d.title, date: d.date }
-                    }))
-                };
+    // Stil yüklenemezse bile harita motorunu zorla çalıştır
+    map.on('error', (e) => {
+        console.log("Mapbox Stil Hatası:", e.error.message);
+    });
 
-                if (map.getSource('quakes')) {
-                    map.getSource('quakes').setData(geojson);
-                } else {
-                    map.addSource('quakes', { type: 'geojson', data: geojson });
-                    map.addLayer({
-                        id: 'quakes-layer',
-                        type: 'circle',
-                        source: 'quakes',
-                        paint: {
-                            'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 4, 7, 20],
-                            'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000'],
-                            'circle-opacity': 0.7,
-                            'circle-stroke-width': 1,
-                            'circle-stroke-color': '#fff'
-                        }
-                    });
-                }
-            } catch (err) {
-                console.error("Veri hatası:", err);
+    async function updateQuakes() {
+        try {
+            const res = await fetch('https://api.orhanaydogdu.com.tr/deprem/kandilli/live');
+            const data = await res.json();
+            const geojson = {
+                type: 'FeatureCollection',
+                features: data.result.map(d => ({
+                    type: 'Feature',
+                    geometry: { type: 'Point', coordinates: [parseFloat(d.lng), parseFloat(d.lat)] },
+                    properties: { mag: d.mag, place: d.title, date: d.date }
+                }))
+            };
+
+            if (map.getSource('quakes')) {
+                map.getSource('quakes').setData(geojson);
+            } else {
+                map.addSource('quakes', { type: 'geojson', data: geojson });
+                map.addLayer({
+                    id: 'quakes-layer',
+                    type: 'circle',
+                    source: 'quakes',
+                    paint: {
+                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 4, 7, 20],
+                        'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000'],
+                        'circle-opacity': 0.8,
+                        'circle-stroke-width': 1,
+                        'circle-stroke-color': '#fff'
+                    }
+                });
             }
+        } catch (err) {
+            console.error("Veri alınamadı:", err);
         }
+    }
 
-        // İlk veriyi yükle
-        await updateData();
-        
-        // Her 60 saniyede bir otomatik güncelle (Canlı Akış)
-        setInterval(updateData, 60000);
+    map.on('load', () => {
+        updateQuakes();
+        setInterval(updateQuakes, 30000);
+    });
 
-        // Tıklama özelliği
-        map.on('click', 'quakes-layer', (e) => {
-            const p = e.features[0].properties;
-            new mapboxgl.Popup()
-                .setLngLat(e.lngLat)
-                .setHTML(`<b>Büyüklük: ${p.mag}</b><br>${p.place}<br><small>${p.date}</small>`)
-                .addTo(map);
-        });
+    map.on('click', 'quakes-layer', (e) => {
+        const p = e.features[0].properties;
+        new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`<b>${p.mag}</b> - ${p.place}<br><small>${p.date}</small>`)
+            .addTo(map);
     });
 </script>
 </body>
