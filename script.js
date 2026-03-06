@@ -9,7 +9,6 @@ const map = new mapboxgl.Map({
 });
 
 map.on('load', () => {
-    // Sis ve Atmosfer Ayarı
     map.setFog({
         'range': [1, 10],
         'color': '#000000',
@@ -18,7 +17,6 @@ map.on('load', () => {
         'star-intensity': 0.15
     });
 
-    // Veri Kaynağı (USGS Günlük Tüm Depremler)
     map.addSource('quakes', {
         'type': 'geojson',
         'data': 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson'
@@ -38,26 +36,43 @@ map.on('load', () => {
                 0, 'rgba(33,102,172,0)',
                 0.2, 'rgb(103,169,207)',
                 0.4, 'rgb(209,229,240)',
-                0.6, 'rgb(253,219,199)',
-                0.8, 'rgb(239,138,98)',
-                1, 'rgb(178,24,43)'
+                0.6, '#f1c40f', // Küçük (Sarı)
+                0.8, '#e67e22', // Hafif (Turuncu)
+                1, '#e74c3c'    // Orta ve üzeri (Kırmızı)
             ],
             'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 9, 20],
             'heatmap-opacity': 0.8
         }
     });
 
-    // Nokta Katmanı
+    // Nokta Katmanı (Yeni Lejand Renklerine Göre)
     map.addLayer({
         'id': 'quakes-point',
         'type': 'circle',
         'source': 'quakes',
         'minzoom': 3,
         'paint': {
-            'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 3, 7, 20],
-            'circle-color': '#ff0000',
+            'circle-radius': [
+                'interpolate', ['linear'], ['get', 'mag'],
+                1, 2,
+                3, 4,
+                5, 8,
+                7, 15,
+                8, 25
+            ],
+            'circle-color': [
+                'step', ['get', 'mag'],
+                '#2ecc71', // M < 3.0
+                3.0, '#f1c40f', // 3.0 - 3.9
+                4.0, '#e67e22', // 4.0 - 4.9
+                5.0, '#e74c3c', // 5.0 - 5.9
+                6.0, '#c0392b', // 6.0 - 6.9
+                7.0, '#96281b', // 7.0 - 7.9
+                8.0, '#8e44ad'  // M > 8.0
+            ],
             'circle-stroke-color': 'white',
-            'circle-stroke-width': 1
+            'circle-stroke-width': 1,
+            'circle-opacity': 0.8
         }
     });
 });
