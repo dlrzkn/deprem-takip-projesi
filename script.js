@@ -59,23 +59,31 @@ async function updateQuakes() {
                 id: 'usgs-viz',
                 type: 'circle',
                 source: 'usgs',
-                paint: {
-                    'circle-radius': [
-    'interpolate', ['linear'], ['get', 'mag'],
-    1, 2,
-    3, 4,
-    5, 8,
-    7, 15,
-    9, 30 // 9 ve üzeri için devasa ama ekranı kaplamayan bir boyut
-],
-'circle-color': [
-    'step', ['get', 'mag'],
-    '#00ff00', 2.5, 
-    '#ffff00', 4.5, 
-    '#ffa500', 6.0, 
-    '#ff0000', 8.0, 
-    '#8b0000'  // 8.0 ve üzeri (Mega Deprem) için koyu bordo
-],
+               paint: {
+    // 0 ile 10 arası logaritmik profesyonel boyutlandırma
+    'circle-radius': [
+        'interpolate', ['linear'], ['get', 'mag'],
+        0, 1,    // Çok küçük sarsıntılar neredeyse görünmez
+        2.5, 3,  // Hafif depremler nokta gibi
+        4.5, 7,  // Orta şiddet belirginleşir
+        6.0, 15, // Güçlü depremler alanı kaplar
+        8.0, 30, // Mega depremler çok büyük
+        10, 50   // Teorik devasa deprem
+    ],
+    // Renk skalası: Richter ölçeği standartlarına göre
+    'circle-color': [
+        'step', ['get', 'mag'],
+        '#2ecc71', 2.5,  // Yeşil (Hissedilmez)
+        '#f1c40f', 4.5,  // Sarı (Orta)
+        '#e67e22', 6.0,  // Turuncu (Güçlü)
+        '#e74c3c', 8.0,  // Kırmızı (Şiddetli)
+        '#8e44ad'       // Mor/Bordo (Mega - 8.0+)
+    ],
+    'circle-opacity': 0.7,
+    'circle-stroke-width': 1,
+    'circle-stroke-color': '#ffffff'
+}
+
 
                     'circle-opacity': 0.7,
                     'circle-stroke-width': 1,
