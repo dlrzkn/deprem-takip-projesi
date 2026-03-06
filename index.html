@@ -4,183 +4,30 @@
     <meta charset="utf-8">
     <title>Sismik İzleme Platformu | Kandilli & USGS</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css" rel="stylesheet">
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
-    <style>
-        body { margin: 0; padding: 0; background: #000; overflow: hidden; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        
-        .control-panel { position: absolute; top: 20px; left: 20px; z-index: 10; }
-        .btn-toggle {
-            background: rgba(25, 25, 25, 0.85); color: #ff9900; border: 1px solid #444;
-            padding: 10px 15px; border-radius: 8px; cursor: pointer; font-family: sans-serif;
-            font-size: 12px; backdrop-filter: blur(5px); transition: 0.3s;
-        }
-        .btn-active { border-color: #ff9900; box-shadow: 0 0 10px rgba(255, 153, 0, 0.3); }
-
-        .legend {
-            background: rgba(15, 15, 15, 0.85); color: #fff; padding: 12px;
-            border-radius: 12px; position: absolute; bottom: 30px; right: 20px;
-            font-family: sans-serif; border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px); z-index: 10;
-        }
-        .legend h4 { margin: 0 0 8px 0; color: #ff9900; font-size: 13px; }
-        .legend div { display: flex; align-items: center; margin-bottom: 4px; font-size: 11px; }
-        .legend span { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="control-panel">
-    <button id="spin-btn" class="btn-toggle btn-active">Otomatik Dönüş: AÇIK</button>
-</div>
+    <div class="control-panel">
+        <button id="spin-btn" class="btn-toggle btn-active">Otomatik Dönüş: AÇIK</button>
+    </div>
 
-<div id="map"></div>
-<div class="legend">
-    <h4>Sismik Veri (Son 24s)</h4>
-    <div><span style="background: #00ff00;"></span> < 3.0 Hafif</div>
-    <div><span style="background: #ffff00;"></span> 3.0 - 5.0 Orta</div>
-    <div><span style="background: #ff0000;"></span> > 5.0 Şiddetli</div>
-    <hr style="border: 0; border-top: 1px solid #333; margin: 8px 0;">
-    <div style="font-size: 10px; opacity: 0.7;">Kaynak: Kandilli & USGS</div>
-</div>
+    <div id="map"></div>
 
-<script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
+    <div class="legend">
+        <h4>Sismik Veri Akışı</h4>
+        <div><span style="background: #ff4d4d;"></span> Kandilli (TR)</div>
+        <div><span style="background: #ffff00;"></span> USGS (Global)</div>
+        <hr style="border: 0; border-top: 1px solid #333; margin: 8px 0;">
+        <div style="font-size: 10px; opacity: 0.6;">Son 24 Saatlik Veriler</div>
+    </div>
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
     
-    const map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/dark-v11',
-        center: [35, 39],
-        zoom: 2,
-        projection: 'globe'
-    });
+    <script src="script.js"></script>
 
-    let spinEnabled = true;
-    let userInteracting = false;
-    const rotationSpeed = 1.2;
-
-    map.on('style.load', () => {
-        map.setFog({
-            'color': 'rgb(15, 20, 30)',
-            'high-color': 'rgb(30, 60, 150)',
-            'space-color': 'rgb(0, 0, 0)',
-            'star-intensity': 0.4
-        });
-    });
-
-    function rotateGlobe() {
-        if (spinEnabled && !userInteracting && map.getZoom() < 5) {
-            const center = map.getCenter();
-            center.lng -= rotationSpeed;
-            map.easeTo({ center, duration: 1000, easing: (t) => t });
-        }
-    }
-
-    const spinBtn = document.getElementById('spin-btn');
-    spinBtn.onclick = () => {
-        spinEnabled = !spinEnabled;
-        spinBtn.textContent = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
-        spinBtn.classList.toggle('btn-active');
-        if (spinEnabled) rotateGlobe();
-    };
-
-    map.on('mousedown', () => { userInteracting = true; });
-    map.on('touchstart', () => { userInteracting = true; });
-    map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
-    map.on('touchend', () => { userInteracting = false; rotateGlobe(); });
-    map.on('moveend', () => { rotateGlobe(); });
-
-    async function updateQuakes() {
-        try {
-            // Kandilli Verileri
-            const kRes = await fetch('https://api.orhanaydogdu.com.tr/deprem/kandilli/live');
-            const kData = await kRes.json();
-            const kGeojson = {
-                type: 'FeatureCollection',
-                features: kData.result.map(d => ({
-                    type: 'Feature',
-                    geometry: { type: 'Point', coordinates: [parseFloat(d.lng), parseFloat(d.lat)] },
-                    properties: { mag: d.mag, place: d.title, date: d.date, source: 'Kandilli' }
-                }))
-            };
-
-            // USGS Verileri (Son 24 Saat, Tüm Depremler)
-            const uRes = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
-            const uGeojson = await uRes.json();
-            uGeojson.features.forEach(f => f.properties.source = 'USGS');
-
-            // Kaynakları Güncelle veya Ekle
-            if (map.getSource('kandilli')) {
-                map.getSource('kandilli').setData(kGeojson);
-                map.getSource('usgs').setData(uGeojson);
-            } else {
-                // Kandilli Layer
-                map.addSource('kandilli', { type: 'geojson', data: kGeojson });
-                map.addLayer({
-                    id: 'kandilli-viz',
-                    type: 'circle',
-                    source: 'kandilli',
-                    paint: {
-                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 4, 7, 25],
-                        'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000'],
-                        'circle-opacity': 0.8,
-                        'circle-stroke-width': 1,
-                        'circle-stroke-color': '#fff'
-                    }
-                });
-
-                // USGS Layer
-                map.addSource('usgs', { type: 'geojson', data: uGeojson });
-                map.addLayer({
-                    id: 'usgs-viz',
-                    type: 'circle',
-                    source: 'usgs',
-                    paint: {
-                        'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 2, 3, 7, 20],
-                        'circle-color': ['interpolate', ['linear'], ['get', 'mag'], 2, '#00ff00', 4, '#ffff00', 6, '#ff0000'],
-                        'circle-opacity': 0.5,
-                        'circle-stroke-width': 0.5,
-                        'circle-stroke-color': '#fff'
-                    }
-                });
-            }
-        } catch (e) { console.error("Veri çekme hatası:", e); }
-    }
-
-    map.on('load', () => {
-        updateQuakes();
-        rotateGlobe();
-        setInterval(updateQuakes, 60000);
-    });
-
-    // Her iki katman için ortak Popup fonksiyonu
-    const setupPopup = (layerId) => {
-        map.on('click', layerId, (e) => {
-            const p = e.features[0].properties;
-            const date = layerId === 'kandilli-viz' ? p.date : new Date(p.time).toLocaleString('tr-TR');
-            
-            new mapboxgl.Popup()
-                .setLngLat(e.lngLat)
-                .setHTML(`
-                    <div style="color:#333; font-family:sans-serif;">
-                        <strong style="font-size:14px;">${p.mag} ML</strong><br>
-                        <span>${p.place || p.title}</span><br>
-                        <small style="color:#666;">${date}</small><br>
-                        <small style="color:#ff9900; font-weight:bold;">Kaynak: ${p.source}</small>
-                    </div>
-                `)
-                .addTo(map);
-        });
-
-        map.on('mouseenter', layerId, () => map.getCanvas().style.cursor = 'pointer');
-        map.on('mouseleave', layerId, () => map.getCanvas().style.cursor = '');
-    };
-
-    setupPopup('kandilli-viz');
-    setupPopup('usgs-viz');
-
-</script>
 </body>
 </html>
-
