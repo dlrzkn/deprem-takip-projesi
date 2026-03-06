@@ -39,19 +39,22 @@ async function updateQuakes() {
                         'interpolate', ['linear'], ['get', 'mag'],
                         0, 1.5, 2.5, 3, 4.5, 7, 6.0, 15, 8.0, 30, 10, 50
                     ],
-              'circle-color': [
-    'step', ['get', 'mag'],
-    '#2ecc71', 3.0,  // 3.0 altı yeşil
-    '#f1c40f', 5.0,  // 3.0 - 5.0 sarı
-    '#e67e22', 6.0,  // 5.0 - 6.0 turuncu
-    '#d35400', 7.0,  // 6.0 - 7.0 koyu turuncu
-    '#e74c3c', 8.0,  // 7.0 - 8.0 kırmızı
-    '#8e44ad'        // 8.0+ mor
-],
-
+                    'circle-color': [
+                        'step', ['get', 'mag'],
+                        '#2ecc71', 3.0,  
+                        '#f1c40f', 5.0,  
+                        '#e67e22', 6.0,  
+                        '#d35400', 7.0,  
+                        '#e74c3c', 8.0,  
+                        '#8e44ad'        
+                    ],
+                    'circle-opacity': 0.8,
+                    'circle-stroke-width': 1,
+                    'circle-stroke-color': '#ffffff'
+                }
             });
 
-            // --- POP-UP SİSTEMİ (GERİ GELDİ) ---
+            // Pop-up Sistemi
             map.on('click', 'usgs-viz', (e) => {
                 const props = e.features[0].properties;
                 const date = new Date(props.time).toLocaleString('tr-TR');
@@ -76,56 +79,39 @@ async function updateQuakes() {
     } catch (e) { console.error("Veri hatası:", e); }
 }
 
-// --- FİLTRELEME SİSTEMİ (AÇILIR KAPANIR) ---
-function filterMag(minMag) {
+// Filtreleme Fonksiyonu
+window.filterMag = function(minMag) {
     if (map.getLayer('usgs-viz')) {
         map.setFilter('usgs-viz', ['>=', ['get', 'mag'], minMag]);
     }
-}
+};
 
-// --- OTOMATİK DÖNÜŞ VE PERFORMANS SİSTEMİ ---
+// Dönüş Fonksiyonu
 function rotateGlobe() {
-    // Sadece dönüş açıksa, kullanıcı dokunmuyorsa ve zoom seviyesi düşükse dön
     if (spinEnabled && !userInteracting && map.getZoom() < 5) {
         const center = map.getCenter();
         center.lng -= 0.5;
-        map.easeTo({ 
-            center, 
-            duration: 1000, 
-            easing: (t) => t, 
-            essential: true 
-        });
+        map.easeTo({ center, duration: 1000, easing: (t) => t, essential: true });
     }
 }
 
-// Hareket bittiğinde (kodla veya elle) kontrol et
 map.on('moveend', () => {
-    if (!userInteracting && spinEnabled) {
-        rotateGlobe();
-    }
+    if (!userInteracting && spinEnabled) rotateGlobe();
 });
 
-// Kasmayı önleyen etkileşim dinleyicileri
 map.on('mousedown', () => { userInteracting = true; });
 map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
 map.on('touchstart', () => { userInteracting = true; });
 map.on('touchend', () => { userInteracting = false; rotateGlobe(); });
-
-// Zoom sırasında kasmayı bitiren kritik blok
 map.on('zoomstart', () => { userInteracting = true; });
-map.on('zoomend', () => { 
-    userInteracting = false; 
-    // Zoom seviyesi çok yüksekse dönüşü tamamen bırak (detaylı inceleme modu)
-    if (map.getZoom() < 5) rotateGlobe(); 
-});
+map.on('zoomend', () => { userInteracting = false; if (map.getZoom() < 5) rotateGlobe(); });
 
 map.on('load', () => {
     updateQuakes();
-    rotateGlobe(); // İlk başlatma
+    rotateGlobe();
     setInterval(updateQuakes, 60000);
 });
 
-// Buton Kontrolü
 const spinBtn = document.getElementById('spin-btn');
 if (spinBtn) {
     spinBtn.onclick = () => {
