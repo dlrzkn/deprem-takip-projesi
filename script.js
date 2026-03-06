@@ -87,7 +87,7 @@ async function updateQuakes() {
 function rotateGlobe() {
     if (spinEnabled && !userInteracting && map.getZoom() < 5) {
         const center = map.getCenter();
-        center.lng -= 0.02;
+        center.lng -= 0.05;
         map.easeTo({ center, duration: 2000, easing: (t) => t });
     }
 }
