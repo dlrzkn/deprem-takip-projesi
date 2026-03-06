@@ -83,22 +83,45 @@ function filterMag(minMag) {
     }
 }
 
-// Otomatik Dönüş Mantığı
+// --- OTOMATİK DÖNÜŞ VE PERFORMANS SİSTEMİ ---
 function rotateGlobe() {
+    // Sadece dönüş açıksa, kullanıcı dokunmuyorsa ve zoom seviyesi düşükse dön
     if (spinEnabled && !userInteracting && map.getZoom() < 5) {
         const center = map.getCenter();
         center.lng -= 0.5;
-        map.easeTo({ center, duration: 1000, easing: (t) => t, essential: true });
+        map.easeTo({ 
+            center, 
+            duration: 1000, 
+            easing: (t) => t, 
+            essential: true 
+        });
     }
 }
 
-map.on('moveend', rotateGlobe);
-map.on('mousedown', () => userInteracting = true);
+// Hareket bittiğinde (kodla veya elle) kontrol et
+map.on('moveend', () => {
+    if (!userInteracting && spinEnabled) {
+        rotateGlobe();
+    }
+});
+
+// Kasmayı önleyen etkileşim dinleyicileri
+map.on('mousedown', () => { userInteracting = true; });
 map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
+map.on('touchstart', () => { userInteracting = true; });
+map.on('touchend', () => { userInteracting = false; rotateGlobe(); });
+
+// Zoom sırasında kasmayı bitiren kritik blok
+map.on('zoomstart', () => { userInteracting = true; });
+map.on('zoomend', () => { 
+    userInteracting = false; 
+    // Zoom seviyesi çok yüksekse dönüşü tamamen bırak (detaylı inceleme modu)
+    if (map.getZoom() < 5) rotateGlobe(); 
+});
 
 map.on('load', () => {
     updateQuakes();
-    rotateGlobe();
+    rotateGlobe(); // İlk başlatma
     setInterval(updateQuakes, 60000);
 });
 
