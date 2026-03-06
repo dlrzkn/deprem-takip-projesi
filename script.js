@@ -8,7 +8,7 @@ const map = new mapboxgl.Map({
     projection: 'globe'
 });
 
-// Navigasyon kontrollerini hemen ekle
+// 1. NAVİGASYON KONTROLLERİ (Pusula ve Zoom Okları)
 map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
 let spinEnabled = true;
@@ -37,45 +37,64 @@ async function updateQuakes() {
                 type: 'circle',
                 source: 'usgs',
                 paint: {
-                    'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 0, 2, 3, 5, 5, 10, 7, 20, 9, 40],
-                    'circle-color': ['step', ['get', 'mag'], '#2ecc71', 3.0, '#f1c40f', 5.0, '#e67e22', 6.0, '#d35400', 7.0, '#e74c3c', 8.0, '#8e44ad'],
+                    'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 2, 3, 5, 5, 12, 7, 25, 9, 45],
+                    'circle-color': [
+                        'step', ['get', 'mag'],
+                        '#2ecc71', 3.0,
+                        '#f1c40f', 5.0,
+                        '#e67e22', 6.0,
+                        '#d35400', 7.0,
+                        '#e74c3c', 8.0,
+                        '#8e44ad'
+                    ],
                     'circle-opacity': 0.8,
                     'circle-stroke-width': 1,
                     'circle-stroke-color': '#ffffff'
                 }
             });
-
-            // --- POP-UP TETİKLEYİCİSİ (KATMAN OLUŞTUĞUNDA ÇALIŞIR) ---
-            map.on('click', 'usgs-viz', (e) => {
-                const props = e.features[0].properties;
-                const coords = e.features[0].geometry.coordinates;
-                const date = new Date(props.time).toLocaleString('tr-TR');
-                
-                new mapboxgl.Popup({ offset: 15, closeButton: true })
-                    .setLngLat(e.lngLat)
-                    .setHTML(`
-                        <div style="font-family: sans-serif; min-width: 200px; color: #333; padding: 5px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">M ${props.mag.toFixed(1)}</span>
-                                <span style="color: #666; font-size: 11px;">${date}</span>
-                            </div>
-                            <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #2c3e50;">${props.place}</div>
-                            <div style="background: #f8f9fa; padding: 8px; border-radius: 5px; font-size: 12px; margin-bottom: 10px; border: 1px solid #eee;">
-                                <b>Derinlik:</b> ${coords[2].toFixed(1)} km <br>
-                                <b>Tür:</b> ${props.type.toUpperCase()}
-                            </div>
-                            <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">USGS Detay Sayfası →</a>
-                        </div>
-                    `)
-                    .addTo(map);
-            });
-
-            map.on('mouseenter', 'usgs-viz', () => map.getCanvas().style.cursor = 'pointer');
-            map.on('mouseleave', 'usgs-viz', () => map.getCanvas().style.cursor = '');
         }
-    } catch (e) { console.error("Veri hatası:", e); }
+    } catch (e) { console.error("Hata:", e); }
 }
 
+// 2. GARANTİLENMİŞ POP-UP SİSTEMİ (Harita üzerine tıklandığında)
+map.on('click', (e) => {
+    const features = map.queryRenderedFeatures(e.point, { layers: ['usgs-viz'] });
+    
+    if (!features.length) return;
+
+    const feature = features[0];
+    const props = feature.properties;
+    const date = new Date(props.time).toLocaleString('tr-TR');
+    const depth = feature.geometry.coordinates[2];
+
+    new mapboxgl.Popup({ offset: 15, closeButton: true })
+        .setLngLat(feature.geometry.coordinates)
+        .setHTML(`
+            <div style="font-family: sans-serif; min-width: 200px; color: #333; padding: 5px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
+                        M ${props.mag.toFixed(1)}
+                    </span>
+                    <span style="color: #666; font-size: 11px;">${date}</span>
+                </div>
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #2c3e50;">${props.place}</div>
+                <div style="background: #f8f9fa; padding: 8px; border-radius: 5px; font-size: 12px; margin-bottom: 10px; border: 1px solid #eee;">
+                    <b>Derinlik:</b> ${depth.toFixed(1)} km <br>
+                    <b>Tür:</b> ${props.type.toUpperCase()}
+                </div>
+                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">
+                    Detaylı İncele (USGS) →
+                </a>
+            </div>
+        `)
+        .addTo(map);
+});
+
+// Fare imlecini değiştirme
+map.on('mousemove', 'usgs-viz', () => { map.getCanvas().style.cursor = 'pointer'; });
+map.on('mouseleave', 'usgs-viz', () => { map.getCanvas().style.cursor = ''; });
+
+// 3. AKICI DÖNÜŞ VE ETKİLEŞİM
 function rotateGlobe() {
     if (spinEnabled && !userInteracting && map.getZoom() < 5) {
         const center = map.getCenter();
@@ -96,6 +115,7 @@ map.on('load', () => {
     setInterval(updateQuakes, 60000);
 });
 
+// 4. FİLTRELEME
 window.filterMag = function(minMag) {
     if (map.getLayer('usgs-viz')) {
         map.setFilter('usgs-viz', ['>=', ['get', 'mag'], minMag]);
