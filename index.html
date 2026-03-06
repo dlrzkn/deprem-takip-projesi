@@ -20,24 +20,25 @@
     <div><span style="color:#00ff00">●</span> < 3.0</div>
     <div><span style="color:#ffff00">●</span> 3.0 - 5.0</div>
     <div><span style="color:#ff0000">●</span> > 5.0</div>
-    <div style="font-size:10px; margin-top:10px; opacity:0.6">Kaynak: Kandilli & USGS</div>
 </div>
 
 <script>
-    // Token'ın doğruluğundan emin ol
     mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
     
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
         center: [35.2433, 38.9637],
-        zoom: 5,
-        projection: 'mercator'
+        zoom: 2, // Küre görünümü için biraz uzaklaştırdım
+        projection: 'globe' // İŞTE BURASI DÜNYAYI KÜRE YAPAR
     });
 
-    // Stil yüklenemezse bile harita motorunu zorla çalıştır
-    map.on('error', (e) => {
-        console.log("Mapbox Stil Hatası:", e.error.message);
+    map.on('style.load', () => {
+        map.setFog({
+            'color': 'rgb(186, 210, 235)', // Atmosfer rengi
+            'high-color': 'rgb(36, 92, 223)', // Uzay rengi
+            'horizon-blend': 0.02
+        });
     });
 
     async function updateQuakes() {
