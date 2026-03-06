@@ -5,11 +5,10 @@ const map = new mapboxgl.Map({
     style: 'mapbox://styles/mapbox/dark-v11',
     center: [35, 39],
     zoom: 2.5,
-    projection: 'globe',
-    interactive: true // Yakınlaşma ve uzaklaşmayı açar
+    projection: 'globe'
 });
 
-// Sağ üst köşeye yakınlaştırma butonlarını ekleyelim
+// Yakınlaştırma butonlarını ekle
 map.addControl(new mapboxgl.NavigationControl());
 
 map.on('load', () => {
@@ -21,22 +20,32 @@ map.on('load', () => {
         'star-intensity': 0.15
     });
 
-    // --- Akıllı Dönüş Sistemi ---
+    // --- Akıllı Dönüş Sistemi (Zoom ve Mouse Dostu) ---
     let spinEnabled = true;
-    const rotationSpeed = 1.5;
+    const rotationSpeed = 0.5; // Hızı biraz düşürdük ki daha akıcı olsun
 
     function rotateGlobe() {
         if (spinEnabled) {
             const center = map.getCenter();
             center.lng -= rotationSpeed;
+            // duration ve easing ayarları zoom yapmana izin verecek şekilde yumuşatıldı
             map.easeTo({ center, duration: 1000, easing: (n) => n });
         }
-        requestAnimationFrame(rotateGlobe);
     }
 
-    // Haritaya dokunduğunda veya tıkladığında dönüşü durdurur
-    map.on('mousedown', () => { spinEnabled = false; });
-    map.on('touchstart', () => { spinEnabled = false; });
+    // Mouse ile etkileşime girdiğinde dönüşü tamamen durdurur (Zoom yapmanı sağlar)
+    map.on('movestart', (e) => {
+        if (e.originalEvent) spinEnabled = false;
+    });
+
+    // Boş bir yere tıkladığında dönüşü tekrar başlatmak istersen:
+    map.on('click', (e) => {
+        if (e.target === map) spinEnabled = true;
+    });
+
+    map.on('moveend', () => {
+        rotateGlobe();
+    });
 
     rotateGlobe();
 
@@ -50,14 +59,13 @@ map.on('load', () => {
         'id': 'quakes-heat',
         'type': 'heatmap',
         'source': 'quakes',
-        'maxzoom': 9,
         'paint': {
             'heatmap-weight': ['interpolate', ['linear'], ['get', 'mag'], 0, 0, 6, 1],
             'heatmap-opacity': 0.3
         }
     });
 
-    // Nokta Katmanı (Boyutları "Kafa kadar" olmaktan çıkardık!)
+    // Nokta Katmanı (Kibarlaştırılmış Boyutlar)
     map.addLayer({
         'id': 'quakes-point',
         'type': 'circle',
@@ -65,11 +73,9 @@ map.on('load', () => {
         'paint': {
             'circle-radius': [
                 'interpolate', ['linear'], ['get', 'mag'],
-                1, 2,   // M1 -> 2px
-                3, 4,   // M3 -> 4px
-                5, 8,   // M5 -> 8px
-                7, 14,  // M7 -> 14px
-                9, 22   // M9 -> 22px
+                1, 2,   // Küçük depremler minik
+                5, 6,   // Orta depremler ideal
+                8, 15   // Dev depremler bile ekranı kaplamaz
             ],
             'circle-color': [
                 'step', ['get', 'mag'],
@@ -81,20 +87,15 @@ map.on('load', () => {
         }
     });
 
-    // Popup - Tıklayınca hem bilgi gelir hem dünya durur
+    // Popup Sistemi
     map.on('click', 'quakes-point', (e) => {
-        spinEnabled = false; 
+        spinEnabled = false; // Detay bakarken dünya dönmesin
         const coordinates = e.features[0].geometry.coordinates.slice();
         const { mag, place, time } = e.features[0].properties;
 
         new mapboxgl.Popup({ offset: 10 })
             .setLngLat(coordinates)
-            .setHTML(`
-                <div style="color:#222; padding:5px; font-family:sans-serif;">
-                    <b style="font-size:1.2em; color:#e74c3c;">M ${mag.toFixed(1)}</b><br>
-                    <span>${place}</span>
-                </div>
-            `)
+            .setHTML(`<div style="color:#222; padding:5px;"><b>M ${mag.toFixed(1)}</b><br>${place}</div>`)
             .addTo(map);
     });
 });
