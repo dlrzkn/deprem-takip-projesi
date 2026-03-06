@@ -18,4 +18,3 @@ body { margin: 0; padding: 0; background: #000; overflow: hidden; }
 .legend h4 { margin: 0 0 8px 0; color: #ff9900; font-size: 13px; }
 .legend div { display: flex; align-items: center; margin-bottom: 4px; font-size: 11px; }
 .legend span { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-
