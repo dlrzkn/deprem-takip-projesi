@@ -59,10 +59,42 @@ async function updateQuakes() {
 }
 // --- POP-UP VE TIKLAMA (Düzeltilmiş Kısım) ---
 map.on('click', 'usgs-viz', (e) => {
-    const feature = e.features[0]; // Eksik olan tanım eklendi
+    // BURASI KRİTİK: 'feature' değişkenini burada tanımlıyoruz
+    const feature = e.features[0]; 
     const props = feature.properties;
     const coords = feature.geometry.coordinates;
     const date = new Date(props.time).toLocaleString('tr-TR');
+    
+    // Derinlik bilgisini coords[2] üzerinden alıyoruz
+    const depth = coords[2] !== undefined ? coords[2] : 0;
+
+    new mapboxgl.Popup({ offset: 15, closeButton: true })
+        .setLngLat([coords[0], coords[1]])
+        .setHTML(`
+            <div style="font-family: sans-serif; min-width: 200px; padding: 5px; color: #000;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
+                        M ${props.mag.toFixed(1)}
+                    </span>
+                    <span style="color: #666; font-size: 11px;">${date}</span>
+                </div>
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">
+                    ${props.place}
+                </div>
+                <div style="background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #eee;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                        <span style="color: #7f8c8d;">Derinlik:</span>
+                        <span style="font-weight: bold;">${depth.toFixed(1)} km</span>
+                    </div>
+                </div>
+                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 11px; margin-top: 10px;">
+                    USGS Detayı →
+                </a>
+            </div>
+        `)
+        .addTo(map);
+});
+
     
     // Derinlik USGS verisinde 3. koordinattır (index 2)
     const depth = coords[2] !== undefined ? coords[2] : 0;
