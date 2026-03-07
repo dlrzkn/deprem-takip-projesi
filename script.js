@@ -1,23 +1,23 @@
 // Mapbox Erişim Tokenı
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
 
-// Global Değişkenler
+// Global Durum Yönetimi
 let allData = [];
 let markers = [];
 let isRotating = true;
 let currentMag = 0;
-let currentRange = 'day';
+let currentRange = 'day'; // 'hour', 'day', 'week'
 
-// Harita Başlatma
+// Haritayı Başlat
 const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
     center: [35, 39], 
     zoom: 2.5, 
-    projection: 'globe' // Profesyonel görünüm için küre projeksiyonu
+    projection: 'globe'
 });
 
-// Atmosfer ve Sis Ayarları (Görsel Derinlik)
+// Atmosferik Efektler
 map.on('style.load', () => {
     map.setFog({
         color: 'rgb(5, 5, 5)',
@@ -34,6 +34,7 @@ async function fetchData() {
     const loader = document.getElementById('loader');
     if(loader) loader.style.display = 'flex';
 
+    // Dinamik USGS URL'si zaman filtresine göre belirlenir
     const sources = [
         { id: 'EMSC', url: 'https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=150', priority: 0 },
         { id: 'USGS', url: `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_${currentRange}.geojson`, priority: 1 },
@@ -47,22 +48,26 @@ async function fetchData() {
         results.forEach((result, index) => {
             if (result.status === 'fulfilled') {
                 const sInfo = sources[index];
-                // FDSNWS ve GeoJSON ayrıştırma mantığı
                 const rawData = result.value.features || result.value.events || (Array.isArray(result.value) ? result.value : []);
                 
                 const standardized = rawData.map(f => {
                     const props = f.properties || f;
+                    const eventId = props.unid || f.id || props.eventid;
                     let coords = f.geometry ? f.geometry.coordinates : [parseFloat(f.longitude), parseFloat(f.latitude)];
                     
+                    // Kaynak bazlı orijinal link oluşturma
+                    let customUrl = props.url;
+                    if (sInfo.id === 'EMSC') customUrl = `https://www.emsc-csem.org/event/${eventId}`;
+                    else if (sInfo.id === 'GFZ') customUrl = `https://geofon.gfz.de/event/gfz${eventId}`;
+
                     return {
                         sourceId: sInfo.id,
-                        priority: sInfo.priority,
                         geometry: { type: 'Point', coordinates: [parseFloat(coords[0]), parseFloat(coords[1])] },
                         properties: {
                             mag: parseFloat(props.mag || props.magnitude || 0),
                             place: props.place || props.region || props.flynn_region || "Bilinmeyen Bölge",
                             time: new Date(props.time || props.m_time).getTime(),
-                            url: props.url || "#"
+                            url: customUrl || "#"
                         }
                     };
                 });
@@ -74,27 +79,24 @@ async function fetchData() {
         render();
         updateStats();
     } catch (e) { 
-        console.error("Sismik veri işleme hatası:", e); 
+        console.error("Veri senkronizasyon hatası:", e); 
     } finally { 
         if(loader) loader.style.display = 'none'; 
     }
 }
 
-// Mükerrer Kayıtları Temizleme (Jeofiziksel Yakınlık Algoritması)
 function smartDeduplicate(data) {
     const unique = [];
-    const thresholdMs = 60000; // 1 dakika tolerans
-    
+    const timeThreshold = 90000; // 1.5 dakika
     data.forEach(event => {
         const isDuplicate = unique.some(u => 
-            Math.abs(u.properties.time - event.properties.time) < thresholdMs &&
+            Math.abs(u.properties.time - event.properties.time) < timeThreshold &&
             Math.abs(u.properties.mag - event.properties.mag) < 0.2
         );
         if (!isDuplicate) unique.push(event);
     });
     return unique;
 }
-
 
 
 
@@ -106,97 +108,131 @@ function render() {
     markers.forEach(m => m.remove());
     markers = [];
 
+    // Filtrele, Sırala ve Son 15 Kaydı Al
     const filtered = allData
         .filter(d => d.properties.mag >= currentMag)
-        .sort((a, b) => b.properties.time - a.properties.time);
+        .sort((a, b) => b.properties.time - a.properties.time)
+        .slice(0, 15);
 
-    if (countEl) countEl.innerText = `${filtered.length} Aktif Kayıt`;
+    if (countEl) countEl.innerText = filtered.length;
 
     filtered.forEach(event => {
-        const mag = event.properties.mag;
+        const { mag, place, time, url } = event.properties;
         
-        // CSS ile uyumlu bilimsel sınıf belirleme
+        // Bilimsel Sınıflandırma
         let magClass = 'mag-low';
-        if (mag >= 6.0) magClass = 'mag-high';
+        if (mag >= 7.0) magClass = 'mag-mega'; 
+        else if (mag >= 6.0) magClass = 'mag-high';
         else if (mag >= 5.0) magClass = 'mag-moderate';
         else if (mag >= 3.0) magClass = 'mag-mid';
 
-        // 1. Harita Marker İşlemleri
+        // 1. Marker ve Pop-up
         const el = document.createElement('div');
         el.className = `sismic-marker ${magClass}`;
-        const size = Math.max(10, mag * 4.5);
-        el.style.width = `${size}px`;
-        el.style.height = `${size}px`;
+        const size = Math.max(12, mag * 4.5);
+        el.style.width = el.style.height = `${size}px`;
+
+        const popup = new mapboxgl.Popup({ offset: 15, closeButton: true })
+            .setHTML(`
+                <div class="scientific-popup">
+                    <header style="border-bottom:1px solid #eee; padding-bottom:5px; margin-bottom:5px">
+                        <strong style="font-size:16px; color:#333">${mag.toFixed(1)} Mw</strong>
+                        <span class="source-tag tag-${event.sourceId.toLowerCase()}" style="float:right">${event.sourceId}</span>
+                    </header>
+                    <div style="font-size:12px; color:#444">
+                        <b>Bölge:</b> ${place}<br>
+                        <b>Zaman:</b> ${new Date(time).toLocaleString('tr-TR')}<br>
+                        <a href="${url}" target="_blank" style="display:block; margin-top:8px; color:#007bff; text-decoration:none; font-weight:bold">İstasyon Verisine Git →</a>
+                    </div>
+                </div>
+            `);
 
         const marker = new mapboxgl.Marker(el)
             .setLngLat(event.geometry.coordinates)
-            .setPopup(new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(`
-                <div style="padding:5px; font-family:Inter">
-                    <b style="font-size:14px">${mag.toFixed(1)} Mw</b><br>
-                    <small>${event.properties.place}</small><br>
-                    <hr style="margin:5px 0; opacity:0.2">
-                    <span style="font-size:10px; color:#666">${new Date(event.properties.time).toLocaleString('tr-TR')}</span>
-                </div>
-            `))
+            .setPopup(popup)
             .addTo(map);
         markers.push(marker);
 
-        // 2. Liste Kartı Oluşturma
+        // 2. Liste Öğesi ve FlyTo Özelliği
         if (listContainer) {
             const item = document.createElement('div');
-            item.className = 'list-item';
+            item.className = 'list-item glass-effect';
+            item.style.position = 'relative'; // Akış için
             item.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span class="${magClass}" style="font-weight:900; font-size:16px;">${mag.toFixed(1)}</span>
-                    <span class="source-tag tag-${event.sourceId.toLowerCase()}">${event.sourceId}</span>
+                <div style="display:flex; justify-content:space-between">
+                    <b class="${magClass}">${mag.toFixed(1)}</b>
+                    <small>${new Date(time).toLocaleTimeString('tr-TR')}</small>
                 </div>
-                <div style="font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${event.properties.place}</div>
-                <div style="font-size:9px; color:#888; margin-top:4px;">${new Date(event.properties.time).toLocaleTimeString('tr-TR')}</div>
+                <div style="font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${place}</div>
             `;
-            item.onclick = () => map.flyTo({ center: event.geometry.coordinates, zoom: 7 });
+            
+            item.onclick = () => {
+                isRotating = false; // Odaklanınca rotasyonu durdur
+                map.flyTo({
+                    center: event.geometry.coordinates,
+                    zoom: 7.5,
+                    essential: true,
+                    speed: 0.8
+                });
+                marker.togglePopup();
+            };
             listContainer.appendChild(item);
         }
     });
 }
 
 
-
-function updateStats() {
-    const updateEl = document.getElementById('last-update');
-    if(updateEl) updateEl.innerText = new Date().toLocaleTimeString('tr-TR');
-}
-
 function changeMag(m) {
     currentMag = m;
-    // Buton aktiflik durumu güncelleme
-    document.querySelectorAll('.mag-btn').forEach(btn => {
-        btn.classList.remove('btn-active');
-        if(parseFloat(btn.innerText) === m || (m === 0 && btn.innerText === 'Hepsi')) btn.classList.add('btn-active');
-    });
+    document.querySelectorAll('.mag-btn').forEach(btn => btn.classList.toggle('btn-active', parseFloat(btn.getAttribute('onclick').match(/\d+\.?\d*/)) === m));
     render();
+}
+
+function changeTime(range) {
+    currentRange = range;
+    document.querySelectorAll('.time-btn').forEach(btn => btn.classList.toggle('btn-active', btn.getAttribute('onclick').includes(range)));
+    fetchData(); // Zaman değişince veriyi tazelemek zorunludur
+}
+
+function toggleTheme() {
+    const style = map.getStyle().mapUri;
+    map.setStyle(style.includes('dark') ? 'mapbox://styles/mapbox/light-v11' : 'mapbox://styles/mapbox/dark-v11');
 }
 
 function toggleRotation() {
     isRotating = !isRotating;
-    const btn = document.getElementById('rotation-btn');
-    if(btn) btn.innerText = isRotating ? '🌎 Durdur' : '🌎 Başlat';
+    document.getElementById('rotation-btn').innerText = isRotating ? '🌎 Durdur' : '🌎 Başlat';
 }
 
-// Otomatik Rotasyon Döngüsü
+function toggleLegend() {
+    const leg = document.getElementById('legend');
+    leg.style.display = (leg.style.display === 'none' || leg.style.display === '') ? 'block' : 'none';
+}
+
+function updateStats() {
+    const el = document.getElementById('last-update');
+    if(el) el.innerText = new Date().toLocaleTimeString('tr-TR');
+}
+
+// Küre Rotasyon Döngüsü
 function rotateGlobe() {
     if (isRotating && map.getZoom() < 5) {
         const center = map.getCenter();
-        center.lng += 0.1;
+        center.lng += 0.15;
         map.easeTo({ center, duration: 0, animate: false });
     }
     requestAnimationFrame(rotateGlobe);
 }
 
-// Başlatma Komutları
+// Uygulamayı Başlat
 map.on('load', () => {
     fetchData();
     rotateGlobe();
-    setInterval(fetchData, 60000); // 1 dakikada bir otomatik güncelleme
+    setInterval(fetchData, 60000); // 1 dakikada bir veri güncelleme
 });
+
+
+
+
 
 
