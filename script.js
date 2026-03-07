@@ -11,13 +11,15 @@ const map = new mapboxgl.Map({
 
 let allData = [], markers = [], isRotating = true, currentMag = 0, currentRange = 'day';
 
+// 1. VERİ ÇEKME (Üçlü Akış)
 async function fetchData() {
     const loader = document.getElementById('loader');
     if(loader) loader.style.display = 'flex';
 
+    // Kaynaklar (Öncelik sırasına göre)
     const sources = [
         { id: 'EMSC', url: 'https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=100', priority: 0 },
-        { id: 'USGS', url: `https://earthquake.usgov/earthquakes/feed/v1.0/summary/all_${currentRange}.geojson`, priority: 1 },
+        { id: 'USGS', url: `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_${currentRange}.geojson`, priority: 1 },
         { id: 'GFZ', url: 'https://geofon.gfz.de/fdsnws/event/1/query?format=json&limit=50', priority: 2 }
     ];
 
@@ -28,7 +30,7 @@ async function fetchData() {
         results.forEach((result, index) => {
             if (result.status === 'fulfilled') {
                 const sInfo = sources[index];
-                // Veri nerede? (GeoJSON ise .features, değilse direkt result.value)
+                // API farklılıklarına göre veriyi standardize et
                 const rawData = result.value.features || (Array.isArray(result.value) ? result.value : []);
                 
                 const standardized = rawData.map(f => {
@@ -43,7 +45,7 @@ async function fetchData() {
                             mag: parseFloat(props.mag || props.magnitude || 0),
                             place: props.place || props.region || "Bilinmeyen Bölge",
                             time: new Date(props.time || props.m_time).getTime(),
-                            url: props.url || `https://www.emsc-csem.org/event/${f.id || ''}`
+                            url: props.url || (f.id ? `https://www.emsc-csem.org/event/${f.id}` : "#")
                         }
                     };
                 });
@@ -51,11 +53,20 @@ async function fetchData() {
             }
         });
 
+        // Akıllı Tekilleştirme Uygula
         allData = smartDeduplicate(mergedFeatures);
         render();
         
+        // İstatistikleri Göster (Kaç kurumdan ne geldiğini görmek için)
+        const stats = allData.reduce((acc, curr) => {
+            acc[curr.sourceId] = (acc[curr.sourceId] || 0) + 1;
+            return acc;
+        }, {});
+
         const updateEl = document.getElementById('last-update');
-        if(updateEl) updateEl.innerText = "Canlı: " + new Date().toLocaleTimeString('tr-TR');
+        if(updateEl) {
+            updateEl.innerText = `E:${stats.EMSC || 0} U:${stats.USGS || 0} G:${stats.GFZ || 0} | ${new Date().toLocaleTimeString('tr-TR')}`;
+        }
     } catch (e) { 
         console.error("Veri hatası:", e); 
     } finally {
@@ -63,9 +74,14 @@ async function fetchData() {
     }
 }
 
+// 2. AKILLI TEKİLLEŞTİRME (Hassaslaştırılmış Ayarlar)
 function smartDeduplicate(data) {
     data.sort((a, b) => a.priority - b.priority);
     const final = [];
+    
+    const TIME_TOLERANCE = 45000; // 45 Saniye (Daha fazlası farklı deprem sayılır)
+    const DIST_TOLERANCE = 0.4;   // Yaklaşık 40km koordinat sapması
+
     data.forEach(item => {
         const isDuplicate = final.some(existing => {
             const tDiff = Math.abs(item.properties.time - existing.properties.time);
@@ -73,13 +89,14 @@ function smartDeduplicate(data) {
                 Math.pow(item.geometry.coordinates[0] - existing.geometry.coordinates[0], 2) +
                 Math.pow(item.geometry.coordinates[1] - existing.geometry.coordinates[1], 2)
             );
-            return tDiff < 60000 && dDiff < 0.5; // 1 dk ve 50km tolerans
+            return tDiff < TIME_TOLERANCE && dDiff < DIST_TOLERANCE;
         });
         if (!isDuplicate) final.push(item);
     });
     return final;
 }
 
+// 3. EKRANA BASMA (Render)
 function render() {
     markers.forEach(m => m.remove());
     markers = allData
@@ -114,7 +131,7 @@ function render() {
         });
 }
 
-// Diğer fonksiyonlar (rotate, toggle vb.) aynı kalabilir...
+// 4. YARDIMCI FONKSİYONLAR
 function rotate() { if (!isRotating || map.getZoom() > 5) return; const center = map.getCenter(); center.lng -= 1.2; map.easeTo({ center, duration: 1000, easing: n => n }); }
 map.on('moveend', () => { if(isRotating) rotate(); });
 function toggleRotation() { isRotating = !isRotating; const btn = document.getElementById('rotation-btn'); if(btn) btn.innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür'; if(isRotating) rotate(); }
@@ -122,5 +139,7 @@ function changeTime(r) { currentRange = r; updateBtn('.time-btn', event.target);
 function changeMag(m) { currentMag = m; updateBtn('.mag-btn', event.target); render(); }
 function updateBtn(cls, target) { document.querySelectorAll(cls).forEach(b => b.classList.remove('btn-active')); if(target) target.classList.add('btn-active'); }
 function toggleTheme() { const isDark = map.getStyle().name.includes('Dark'); map.setStyle('mapbox://styles/mapbox/' + (isDark ? 'streets-v12' : 'dark-v11')); }
+
 map.on('style.load', () => { map.setFog({}); rotate(); fetchData(); });
 setInterval(fetchData, 120000);
+
