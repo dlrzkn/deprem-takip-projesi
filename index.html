@@ -42,6 +42,12 @@
         <hr style="border: 0; border-top: 1px solid #333; margin: 8px 0;">
         <div style="font-size: 10px; opacity: 0.6;">Kaynak: USGS / NEIC</div>
     </div>
+    
+<div class="time-filters" style="margin-top: 10px; display: flex; gap: 5px;">
+    <button class="filter-btn" onclick="changeTimeRange('hour', this)">Son 1 Saat</button>
+    <button class="filter-btn btn-active" onclick="changeTimeRange('day', this)">Son 1 Gün</button>
+    <button class="filter-btn" onclick="changeTimeRange('week', this)">Son 1 Hafta</button>
+</div>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
     
