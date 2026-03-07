@@ -15,7 +15,6 @@ const EarthquakeApp = {
             center: [35, 39],
             zoom: 2.5,
             projection: 'globe',
-            // TABLET/MOBİL İÇİN DOKUNMATİK KONTROLLER
             dragPan: true,
             touchZoomRotate: true,
             scrollZoom: true,
@@ -162,26 +161,37 @@ const EarthquakeApp = {
             });
         });
 
+        // Kullanıcı etkileşimi takibi
+        this.map.on('mousedown', () => { this.isUserInteracting = true; });
         this.map.on('touchstart', () => { this.isUserInteracting = true; });
-        this.map.on('touchend', () => { this.isUserInteracting = false; });
+        this.map.on('mouseup', () => { this.isUserInteracting = false; this.setupRotation(); });
+        this.map.on('touchend', () => { this.isUserInteracting = false; this.setupRotation(); });
     },
 
     setupRotation() {
         const rotate = () => {
             if (!this.isRotating || this.map.getZoom() > 5 || this.isUserInteracting) return;
             const center = this.map.getCenter();
-            center.lng -= 0.8;
-            this.map.easeTo({ center, duration: 1000, easing: n => n });
+            center.lng -= 1.5; // Dönüş hızı
+            this.map.easeTo({ center, duration: 1000, easing: n => n, essential: true });
         };
-        this.map.on('moveend', rotate);
+        this.map.once('moveend', rotate);
         rotate();
     },
 
     toggleRotation() {
         this.isRotating = !this.isRotating;
         const btn = document.getElementById('rotation-btn');
-        btn.innerHTML = this.isRotating ? '🌎 Durdur' : '🔄 Döndür';
-        if (!this.isRotating) { this.map.stop(); } else { this.isUserInteracting = false; this.setupRotation(); }
+        if (btn) {
+            btn.innerHTML = this.isRotating ? '🌎 Durdur' : '🔄 Döndür';
+            btn.classList.toggle('btn-active', this.isRotating);
+        }
+        if (!this.isRotating) { 
+            this.map.stop(); 
+        } else { 
+            this.isUserInteracting = false; 
+            this.setupRotation(); 
+        }
     },
 
     updateUIStats() {
@@ -190,7 +200,6 @@ const EarthquakeApp = {
             return acc;
         }, {});
         
-        // Mavi, Turuncu, Mor Rozetleri Doldur
         const e = document.querySelector('.tag-emsc');
         const u = document.querySelector('.tag-usgs');
         const g = document.querySelector('.tag-gfz');
@@ -242,7 +251,6 @@ const EarthquakeApp = {
 
 EarthquakeApp.init();
 setInterval(() => EarthquakeApp.fetchData(), 120000);
-
 
 
 
