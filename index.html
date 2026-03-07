@@ -1,35 +1,67 @@
-<div class="top-bar glass-effect">
-    <div class="live-indicator"><span class="dot"></span> CANLI</div>
-    <div id="last-update">--:--:--</div>
-    <button id="theme-toggle" onclick="toggleTheme()">🌓</button>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sismik İzleme Platformu | Canlı Deprem Takibi</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="top-bar glass-effect">
+        <div class="live-indicator"><span class="dot"></span> CANLI VERİ</div>
+        <div id="last-update">--:--:--</div>
+        <button id="theme-toggle" onclick="toggleTheme()" title="Gece/Gündüz Modu">🌓</button>
+    </div>
+
+    <button id="rotation-btn" class="glass-effect action-btn" onclick="toggleRotation()">🌎 Durdur</button>
+
+    <div class="bottom-panel glass-effect">
+        <div class="filter-group">
+            <span class="label">Magnitüd (Mw)</span>
+            <div class="btn-row">
+                <button class="mag-btn btn-active" onclick="changeMag(0)">Hepsi</button>
+                <button class="mag-btn" onclick="changeMag(4.5)">4.5+</button>
+                <button class="mag-btn" onclick="changeMag(6.0)">6.0+</button>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="label">Zaman Aralığı</span>
+            <div class="btn-row">
+                <button class="time-btn" onclick="changeTime('hour')">1 Saat</button>
+                <button class="time-btn btn-active" onclick="changeTime('day')">24 Saat</button>
+                <button class="time-btn" onclick="changeTime('week')">7 Gün</button>
+            </div>
+        </div>
+        <button id="legend-btn" class="glass-effect" onclick="toggleLegend()" title="Bilgi Paneli">ℹ️</button>
+    </div>
+
+    <div id="legend" class="legend-box glass-effect">
+    <h4>Magnitüd Ölçeği (Mw)</h4>
+    <div class="l-item"><span style="background:#2ecc71;"></span> Mikro (&lt; 3.0)</div>
+    <div class="l-item"><span style="background:#f1c40f;"></span> Küçük / Hafif (3.0 - 4.9)</div>
+    <div class="l-item"><span style="background:#e67e22;"></span> Orta (5.0 - 5.9)</div>
+    <div class="l-item"><span style="background:#e74c3c;"></span> Güçlü (6.0 - 6.9)</div>
+    <div class="l-item"><span style="background:#c0392b;"></span> Büyük (7.0 - 7.9)</div>
+    <div class="l-item"><span style="background:#8e44ad;"></span> Yıkıcı / Çok Büyük (&gt; 8.0)</div>
+    <hr style="border:0.5px solid rgba(255,255,255,0.1); margin:10px 0;">
+    <p style="font-size:10px; opacity:0.6;">Kaynak: [USGS Earthquake Hazards Program](https://earthquake.usgs.gov/)</p>
 </div>
 
-<button id="rotation-btn" class="glass-effect action-btn" onclick="toggleRotation()">🌎 Durdur</button>
 
-<div class="bottom-panel glass-effect">
-    <div class="filter-group">
-        <span class="label">Büyüklük</span>
-        <div class="btn-row">
-            <button class="mag-btn btn-active" onclick="changeMag(0)">Hepsi</button>
-            <button class="mag-btn" onclick="changeMag(4.5)">4.5+</button>
-            <button class="mag-btn" onclick="changeMag(6.0)">6.0+</button>
+
+    <div id="loader" class="loader-overlay">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p>SİSMİK VERİLER YÜKLENİYOR</p>
         </div>
     </div>
-    <div class="filter-group">
-        <span class="label">Zaman</span>
-        <div class="btn-row">
-            <button class="time-btn" onclick="changeTime('hour')">1 Saat</button>
-            <button class="time-btn btn-active" onclick="changeTime('day')">24 Saat</button>
-            <button class="time-btn" onclick="changeTime('week')">7 Gün</button>
-        </div>
-    </div>
-    <button id="legend-btn" class="glass-effect" onclick="toggleLegend()">ℹ️</button>
-</div>
 
-<div id="legend" class="legend-box glass-effect">
-    <h4>Magnitüd (Mw)</h4>
-    <div class="l-item"><span style="background:#2ecc71"></span> Mikro (&lt; 3.0)</div>
-    <div class="l-item"><span style="background:#f1c40f"></span> Hafif (3.0 - 5.5)</div>
-    <div class="l-item"><span style="background:#e74c3c"></span> Güçlü (5.5 - 7.0)</div>
-    <div class="l-item"><span style="background:#8e44ad"></span> Yıkıcı (&gt; 7.0)</div>
-</div>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
