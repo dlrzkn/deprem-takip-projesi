@@ -17,7 +17,7 @@ let allData = [], markers = [], isRotating = true, currentMag = 0, currentRange 
 function rotateGlobe() {
     if (!isRotating || map.getZoom() > 5) return;
     const center = map.getCenter();
-    center.lng -= 0.80;
+    center.lng -= 1.5;
     map.easeTo({ center, duration: 1000, easing: n => n });
 }
 
