@@ -98,38 +98,87 @@ function smartDeduplicate(data) {
 
 // 3. EKRANA BASMA (Render)
 function render() {
+    // 1. Mevcut markerları temizle
     markers.forEach(m => m.remove());
-    markers = allData
-        .filter(f => f.properties.mag >= currentMag)
-        .map(f => {
-            const { mag, place, time, url } = f.properties;
-            const source = f.sourceId;
-            const color = mag >= 7 ? '#c0392b' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
+    
+    // 2. Filtrelenmiş veriyi hazırla
+    const filteredData = allData.filter(f => f.properties.mag >= currentMag);
 
-            const el = document.createElement('div');
-            el.className = 'sismic-marker';
-            const size = Math.max(mag * 4 + 8, 12);
-            el.style.cssText = `background:${color}; width:${size}px; height:${size}px; border:2px solid #fff;`;
+    // 3. Harita Markerlarını Oluştur
+    markers = filteredData.map(f => {
+        const { mag, place, time, url } = f.properties;
+        const source = f.sourceId;
+        const color = mag >= 7 ? '#c0392b' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
 
-            const popupHTML = `
-                <div style="font-family:sans-serif; min-width:160px; color:#000; padding:5px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                        <span class="source-tag tag-${source.toLowerCase()}">${source}</span>
-                        <b style="color:${color}">${mag.toFixed(1)} Mw</b>
-                    </div>
-                    <strong style="display:block; font-size:12px; margin-bottom:5px;">${place}</strong>
-                    <small style="color:#666;">${new Date(time).toLocaleString('tr-TR')}</small>
-                    <a href="${url}" target="_blank" style="display:block; margin-top:8px; text-align:center; background:#333; color:#fff; text-decoration:none; padding:5px; border-radius:4px; font-size:10px;">DETAYLAR ↗</a>
+        const el = document.createElement('div');
+        el.className = 'sismic-marker';
+        const size = Math.max(mag * 4 + 8, 12);
+        el.style.cssText = `background:${color}; width:${size}px; height:${size}px; border:2px solid #fff;`;
+
+        const popupHTML = `
+            <div style="font-family:sans-serif; min-width:160px; color:#000; padding:5px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span class="source-tag tag-${source.toLowerCase()}">${source}</span>
+                    <b style="color:${color}">${mag.toFixed(1)} Mw</b>
                 </div>
-            `;
+                <strong style="display:block; font-size:12px; margin-bottom:5px;">${place}</strong>
+                <small style="color:#666;">${new Date(time).toLocaleString('tr-TR')}</small>
+                <a href="${url}" target="_blank" style="display:block; margin-top:8px; text-align:center; background:#333; color:#fff; text-decoration:none; padding:5px; border-radius:4px; font-size:10px;">DETAYLAR ↗</a>
+            </div>
+        `;
 
-            const marker = new mapboxgl.Marker(el)
-                .setLngLat(f.geometry.coordinates)
-                .setPopup(new mapboxgl.Popup({ offset: 20 }).setHTML(popupHTML))
-                .addTo(map);
-            return marker;
-        });
+        return new mapboxgl.Marker(el)
+            .setLngLat(f.geometry.coordinates)
+            .setPopup(new mapboxgl.Popup({ offset: 20 }).setHTML(popupHTML))
+            .addTo(map);
+    });
+
+    // 4. Sol taraftaki listeyi güncelle
+    updateList(filteredData);
 }
+
+// Listeyi güncelleyen yardımcı fonksiyonu da render'ın hemen altına ekle:
+function updateList(data) {
+    const listContainer = document.getElementById('earthquake-list');
+    const countEl = document.getElementById('list-count');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '';
+    
+    // Veriyi zamana göre sırala (En yeni en üstte)
+    const sortedData = [...data].sort((a, b) => b.properties.time - a.properties.time);
+    
+    if (countEl) countEl.innerText = `${sortedData.length} Deprem`;
+
+    sortedData.slice(0, 30).forEach(f => {
+        const { mag, place, time } = f.properties;
+        const color = mag >= 7 ? '#c0392b' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
+        
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        item.innerHTML = `
+            <div class="list-item-top">
+                <span class="list-mag" style="color:${color}">${mag.toFixed(1)}</span>
+                <span class="source-tag tag-${f.sourceId.toLowerCase()}" style="font-size:8px;">${f.sourceId}</span>
+            </div>
+            <span class="list-place">${place}</span>
+            <small style="font-size:9px; color:#888;">${new Date(time).toLocaleTimeString('tr-TR')}</small>
+        `;
+        
+        // Listeye tıklandığında haritada o depreme git ve popup'ı aç
+        item.onclick = () => {
+            map.flyTo({ 
+                center: f.geometry.coordinates, 
+                zoom: 8, 
+                duration: 1500,
+                essential: true 
+            });
+        };
+        
+        listContainer.appendChild(item);
+    });
+}
+
 
 // 4. YARDIMCI FONKSİYONLAR
 function rotate() { if (!isRotating || map.getZoom() > 5) return; const center = map.getCenter(); center.lng -= 1.2; map.easeTo({ center, duration: 1000, easing: n => n }); }
