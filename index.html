@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sismik Dashboard</title>
+    <title>Sismik Dashboard | Canlı Takip</title>
     
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css' rel='stylesheet' />
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js'></script>
@@ -12,10 +12,22 @@
 </head>
 <body>
 
+    <div class="live-indicator">
+        <span class="pulse-dot"></span>
+        <span class="live-text">CANLI SİSMİK VERİ AKIŞI</span>
+    </div>
+
     <div id="map"></div>
 
     <div class="control-panel">
-        <div id="last-update">Veri senkronize ediliyor...</div>
+        <div class="panel-header">
+            <div id="last-update">Senkronize Ediliyor...</div>
+            <div class="stat-container">
+                <span class="stat-badge tag-emsc" title="EMSC Kaynaklı">E: 0</span>
+                <span class="stat-badge tag-usgs" title="USGS Kaynaklı">U: 0</span>
+                <span class="stat-badge tag-gfz" title="GFZ Kaynaklı">G: 0</span>
+            </div>
+        </div>
         
         <div class="filter-group">
             <h4>Büyüklük (Mw)</h4>
@@ -47,9 +59,10 @@
     </div>
 
     <div id="loader" style="display:none;">
-        <span>Sismik Veriler Alınıyor...</span>
+        <span class="loader-text">Sismik Veriler Alınıyor...</span>
     </div>
 
     <script src="script.js"></script>
 </body>
 </html>
+
