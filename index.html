@@ -1,29 +1,54 @@
-<div id="map"></div> <div class="control-panel">
-    <div id="last-update">Veri yükleniyor...</div>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sismik Takip Platformu | Profesyonel Deprem İzleme</title>
     
-    <div class="filter-group">
-        <h4>Magnitüd</h4>
-        <button class="mag-btn btn-active" onclick="EarthquakeApp.changeMag(0, event)">Hepsi</button>
-        <button class="mag-btn" onclick="EarthquakeApp.changeMag(4.5, event)">4.5+</button>
-        <button class="mag-btn" onclick="EarthquakeApp.changeMag(6.0, event)">6.0+</button>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js'></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="control-panel">
+        <div id="last-update">Veri senkronize ediliyor...</div>
+        
+        <div class="filter-group">
+            <h4>Magnitüd (Mw)</h4>
+            <button class="mag-btn btn-active" onclick="EarthquakeApp.changeMag(0, event)">Hepsi</button>
+            <button class="mag-btn" onclick="EarthquakeApp.changeMag(4.5, event)">4.5+</button>
+            <button class="mag-btn" onclick="EarthquakeApp.changeMag(6.0, event)">6.0+</button>
+        </div>
+
+        <div class="filter-group">
+            <h4>Zaman Aralığı</h4>
+            <button class="time-btn" onclick="EarthquakeApp.changeTime('hour', event)">1 Saat</button>
+            <button class="time-btn btn-active" onclick="EarthquakeApp.changeTime('day', event)">24 Saat</button>
+            <button class="time-btn" onclick="EarthquakeApp.changeTime('week', event)">7 Gün</button>
+        </div>
+
+        <div class="action-group">
+            <button id="rotation-btn" onclick="EarthquakeApp.toggleRotation()">🌎 Durdur</button>
+            <button onclick="EarthquakeApp.toggleTheme()">🌓 Tema Değiştir</button>
+        </div>
     </div>
 
-    <div class="filter-group">
-        <h4>Zaman</h4>
-        <button class="time-btn" onclick="EarthquakeApp.changeTime('hour', event)">1 Saat</button>
-        <button class="time-btn btn-active" onclick="EarthquakeApp.changeTime('day', event)">24 Saat</button>
-        <button class="time-btn" onclick="EarthquakeApp.changeTime('week', event)">7 Gün</button>
+    <div class="list-container">
+        <div id="list-count">Depremler Listeleniyor</div>
+        <div id="earthquake-list">
+            </div>
     </div>
 
-    <div class="action-group">
-        <button id="rotation-btn" onclick="EarthquakeApp.toggleRotation()">🌎 Durdur</button>
-        <button onclick="EarthquakeApp.toggleTheme()">🌓 Tema</button>
+    <div id="loader">
+        <div class="spinner"></div>
+        <span>Sismik Veriler Alınıyor...</span>
     </div>
-</div>
 
-<div class="list-container">
-    <div id="list-count">0 Deprem</div>
-    <div id="earthquake-list"></div>
-</div>
+    <script src="script.js"></script>
 
-<div id="loader" style="display:none;">Yükleniyor...</div>
+</body>
+</html>
