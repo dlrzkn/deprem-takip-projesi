@@ -42,21 +42,15 @@ async function updateQuakes() {
                 type: 'circle',
                 source: 'usgs',
                 paint: {
-                    'circle-radius': [
-                        'interpolate', ['linear'], ['get', 'mag'],
-                        1, 2, 3, 4, 5, 8, 7, 16, 9, 35
-                    ],
-                    'circle-color': [
-                        'step', ['get', 'mag'],
-                        '#2ecc71', 3.0, '#f1c40f', 5.0, '#e67e22', 6.0, '#d35400', 7.0, '#e74c3c', 8.0, '#8e44ad'
-                    ],
+                    'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 2, 3, 4, 5, 8, 7, 16, 9, 35],
+                    'circle-color': ['step', ['get', 'mag'], '#2ecc71', 3.0, '#f1c40f', 5.0, '#e67e22', 6.0, '#d35400', 7.0, '#e74c3c', 8.0, '#8e44ad'],
                     'circle-opacity': 0.8,
                     'circle-stroke-width': 1,
                     'circle-stroke-color': '#ffffff'
                 }
             });
         }
-    } catch (e) { console.error("Hata:", e); }
+    } catch (e) { console.error("Veri hatası:", e); }
 }
 
 
@@ -80,7 +74,7 @@ map.on('click', 'usgs-viz', (e) => {
                 <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">${props.place}</div>
                 <div style="background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #eee;">
                     <div style="display: flex; justify-content: space-between; font-size: 12px;">
-                        <span style="color: #7f8c8d;">Derinlik:</span>
+                        <span>Derinlik:</span>
                         <span style="font-weight: bold;">${depth.toFixed(1)} km</span>
                     </div>
                 </div>
@@ -88,9 +82,6 @@ map.on('click', 'usgs-viz', (e) => {
             </div>
         `).addTo(map);
 });
-
-map.on('mousemove', 'usgs-viz', () => { map.getCanvas().style.cursor = 'pointer'; });
-map.on('mouseleave', 'usgs-viz', () => { map.getCanvas().style.cursor = ''; });
 
 window.changeTimeRange = function(range, btnElement) {
     currentRange = range;
@@ -118,16 +109,10 @@ function rotateGlobe() {
 map.on('moveend', () => { if (!userInteracting && spinEnabled) rotateGlobe(); });
 map.on('mousedown', () => { userInteracting = true; });
 map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
-
-map.on('load', () => {
-    updateQuakes();
-    rotateGlobe();
-    setInterval(updateQuakes, 60000);
-});
+map.on('load', () => { updateQuakes(); rotateGlobe(); setInterval(updateQuakes, 60000); });
 
 document.getElementById('spin-btn').onclick = function() {
     spinEnabled = !spinEnabled;
     this.textContent = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
     this.classList.toggle('btn-active', spinEnabled);
 };
-
