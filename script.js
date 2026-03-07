@@ -25,7 +25,7 @@ const EarthquakeApp = {
             this.setupSources();
             this.setupLayers();
             this.setupInteractions();
-            this.setupRotation();
+            this.setupRotation(); // Rotasyonu başlat
             this.fetchData();
         });
 
@@ -177,16 +177,17 @@ const EarthquakeApp = {
         this.map.on('touchend', startInt);
     },
 
+    // ROTASYON MANTIĞI: Her seferinde 120 derece döner (daha uzun ve akıcı bir parça)
     setupRotation() {
         if (!this.isRotating || this.map.getZoom() > 5 || this.isUserInteracting) return;
         
         const center = this.map.getCenter();
-        center.lng -= 40; 
+        center.lng -= 120; // Büyük bir adım atıyoruz
         
         this.map.easeTo({
             center,
-            duration: 20000, 
-            easing: n => n, 
+            duration: 20000, // 20 saniye boyunca yavaşça döner
+            easing: n => n, // Sabit hız
             essential: true
         });
     },
