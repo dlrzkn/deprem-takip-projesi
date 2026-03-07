@@ -3,7 +3,6 @@ body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: s
 
 .control-panel { position: absolute; top: 20px; left: 20px; z-index: 10; }
 
-/* Butonların Temel Tasarımı */
 .filter-btn {
     background: rgba(25, 25, 25, 0.9);
     color: #fff;
@@ -15,7 +14,7 @@ body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: s
     font-weight: bold;
     backdrop-filter: blur(8px);
     transition: 0.3s;
-    margin-right: 5px; /* Butonlar arası boşluk */
+    margin-right: 5px;
 }
 
 .filter-btn:hover {
@@ -23,7 +22,6 @@ body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: s
     border-color: #ff9900;
 }
 
-/* AKTİF BUTON: Hangi filtrenin seçili olduğunu gösterir */
 .btn-active {
     background: #ff9900 !important;
     color: #000 !important;
@@ -31,16 +29,6 @@ body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: s
     font-weight: bold;
     box-shadow: 0 0 12px rgba(255, 153, 0, 0.6);
 }
-
-.legend {
-    background: rgba(15, 15, 15, 0.9); color: #fff; padding: 15px;
-    border-radius: 12px; position: absolute; bottom: 40px; right: 20px;
-    border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); z-index: 10;
-}
-.legend h4 { margin: 0 0 10px 0; color: #ff9900; font-size: 14px; }
-.legend div { display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; }
-.legend span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 10px; }
-.mapboxgl-popup { color: #000; z-index: 9999; }
 
 
 .bottom-controls {
@@ -70,25 +58,33 @@ body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: s
     letter-spacing: 0.5px;
 }
 
-.btn-row {
-    display: flex;
-    gap: 4px;
-}
+.btn-row { display: flex; gap: 4px; }
+
 
 .legend {
-    transition: all 0.3s ease;
+    background: rgba(15, 15, 15, 0.9);
+    color: #fff;
+    padding: 15px;
+    border-radius: 12px;
     position: absolute;
     bottom: 40px;
     right: 20px;
-    /* Diğer mevcut stillerin... */
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    transition: all 0.3s ease;
 }
 
-/* Panel kapalıyken sağa doğru kayıp gizlenecek */
 .legend.closed {
-    transform: translateX(250px);
+    transform: translateX(280px); /* Kapanma mesafesini biraz artırdık */
     opacity: 0;
     pointer-events: none;
 }
+
+.legend h4 { margin: 0 0 10px 0; color: #ff9900; font-size: 14px; }
+.legend div { display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; }
+.legend span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 10px; }
+
 
 #legend-toggle {
     position: absolute;
@@ -114,3 +110,5 @@ body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: s
     z-index: 101;
     backdrop-filter: blur(10px);
 }
+
+.mapboxgl-popup { color: #000; z-index: 9999; }
