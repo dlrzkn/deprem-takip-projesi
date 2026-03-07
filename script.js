@@ -177,20 +177,23 @@ const EarthquakeApp = {
         this.map.on('touchend', startInt);
     },
 
-    // ROTASYON MANTIĞI: Her seferinde 120 derece döner (daha uzun ve akıcı bir parça)
-    setupRotation() {
-        if (!this.isRotating || this.map.getZoom() > 5 || this.isUserInteracting) return;
-        
-        const center = this.map.getCenter();
-        center.lng -= 50; // Büyük bir adım atıyoruz
-        
-        this.map.easeTo({
-            center,
-            duration: 20000, // 20 saniye boyunca yavaşça döner
-            easing: n => n, // Sabit hız
-            essential: true
-        });
-    },
+    // ROTASYON MANTIĞI: Her seferinde 40 derece döner (daha uzun ve akıcı bir parça)
+   setupRotation() {
+    if (!this.isRotating || this.map.getZoom() > 5 || this.isUserInteracting) return;
+    
+    const center = this.map.getCenter();
+    // 120 derece yerine 40 dereceye düşürdük, daha az yol katedecek
+    center.lng -= 40; 
+    
+    this.map.easeTo({
+        center,
+        // Süreyi 20 saniyede tuttuk, böylece daha yavaş akacak
+        duration: 20000, 
+        easing: n => n, 
+        essential: true
+    });
+}
+
 
     toggleRotation() {
         this.isRotating = !this.isRotating;
