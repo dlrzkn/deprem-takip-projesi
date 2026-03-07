@@ -15,8 +15,6 @@
 
     <div id="map" style="height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;"></div>
 
-
-
     <div class="top-bar">
         <div class="live-indicator">
             <span class="dot"></span> CANLI VERİ
@@ -24,14 +22,25 @@
         <div id="last-update" class="update-text">Son Güncelleme: --:--</div>
     </div>
 
+    <button id="rotation-btn" class="glass-effect" onclick="toggleRotation()" style="position: absolute; top: 80px; left: 20px; z-index: 100; color: white; padding: 10px; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2);">🌎 Durdur</button>
+
     <div class="bottom-controls">
+        <div class="filter-group glass-effect">
+            <div class="filter-label">Zaman Aralığı</div>
+            <div class="btn-row">
+                <button class="filter-btn btn-active" onclick="changeTimeRange('hour')">1 Saat</button>
+                <button class="filter-btn" onclick="changeTimeRange('day')">24 Saat</button>
+                <button class="filter-btn" onclick="changeTimeRange('week')">7 Gün</button>
+            </div>
+        </div>
+
         <div class="filter-group glass-effect">
             <div class="filter-label">Büyüklük Filtresi</div>
             <div class="btn-row">
-                <button class="filter-btn btn-active" onclick="filterMag(0)">Hepsi</button>
-                <button class="filter-btn" onclick="filterMag(3.0)">3.0+</button>
-                <button class="filter-btn" onclick="filterMag(4.5)">4.5+</button>
-                <button class="filter-btn" onclick="filterMag(6.0)">6.0+</button>
+                <button class="mag-btn btn-active" onclick="filterMag(0)">Hepsi</button>
+                <button class="mag-btn" onclick="filterMag(3.0)">3.0+</button>
+                <button class="mag-btn" onclick="filterMag(4.5)">4.5+</button>
+                <button class="mag-btn" onclick="filterMag(6.0)">6.0+</button>
             </div>
         </div>
     </div>
@@ -65,15 +74,9 @@
         <div class="spinner"></div>
         <p>Sismik veriler yükleniyor...</p>
     </div>
-<script>
-    // Eğer 10 saniye içinde JS haritayı açamazsa, yükleme ekranını zorla kaldır.
-    setTimeout(function() {
-        var loader = document.getElementById('loader');
-        if (loader) loader.style.display = 'none';
-    }, 10000);
-</script>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
+
