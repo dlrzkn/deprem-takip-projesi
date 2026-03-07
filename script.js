@@ -1,39 +1,63 @@
-// Mapbox panelinden aldığın token
+// Mapbox panelinden aldığın aktif token
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
 
 const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
-    center: [35, 39], zoom: 2.2, projection: 'globe'
+    center: [35, 39], 
+    zoom: 2.2, 
+    projection: 'globe'
 });
 
 let allData = [], markers = [], isRotating = true, currentMag = 0, currentRange = 'day';
 
-// Akıllı Dönüş: Kullanıcı müdahalesine izin verir
-function rotate() {
+/* ==========================================================
+   1. AKILLI DÜNYA DÖNÜŞ MOTORU (Eski Projedeki Mantık)
+   ========================================================== */
+function rotateGlobe() {
+    // Eğer kullanıcı durdurduysa veya çok yakındaysa dönme
     if (!isRotating || map.getZoom() > 5) return;
+    
     const center = map.getCenter();
-    center.lng += 0.15;
+    center.lng += 0.15; // Akıcı ve profesyonel bir dönüş hızı
     map.easeTo({ center, duration: 1000, easing: n => n });
 }
-map.on('moveend', () => { if(isRotating) rotate(); });
 
+// Harita her hareketini bitirdiğinde (eğer dönüş açıksa) tekrar tetikle
+map.on('moveend', () => { 
+    if (isRotating) rotateGlobe(); 
+});
+
+// Durdur/Döndür butonu işlevi
 function toggleRotation() {
     isRotating = !isRotating;
-    document.getElementById('rotation-btn').innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür';
-    if(isRotating) rotate();
+    const btn = document.getElementById('rotation-btn');
+    if (btn) {
+        btn.innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür';
+    }
+    if (isRotating) rotateGlobe();
 }
 
+/* ==========================================================
+   2. VERİ ÇEKME VE GÖRSELLEŞTİRME
+   ========================================================== */
 async function fetchData() {
-    document.getElementById('loader').style.display = 'flex';
+    const loader = document.getElementById('loader');
+    if (loader) loader.style.display = 'flex';
+    
     try {
         const res = await fetch(`https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_${currentRange}.geojson`);
         const json = await res.json();
         allData = json.features;
         render();
-        document.getElementById('last-update').innerText = "Son: " + new Date().toLocaleTimeString();
-    } catch (e) { console.error(e); }
-    document.getElementById('loader').style.display = 'none';
+        
+        const updateEl = document.getElementById('last-update');
+        if (updateEl) updateEl.innerText = "Son: " + new Date().toLocaleTimeString();
+    } catch (e) { 
+        console.error("Veri çekme hatası:", e); 
+    }
+    
+    if (loader) loader.style.display = 'none';
 }
 
 function render() {
@@ -42,8 +66,10 @@ function render() {
         .filter(f => f.properties.mag >= currentMag)
         .map(f => {
             const mag = f.properties.mag;
-            const props = f.properties; // Kolay erişim için
-            const coords = f.geometry.coordinates; // [boylam, enlem, derinlik]
+            const props = f.properties;
+            const coords = f.geometry.coordinates;
+            
+            // USGS ve Jeofizik Standartlarında Renk Skalası
             const color = mag >= 8 ? '#8e44ad' : mag >= 7 ? '#c0392b' : mag >= 6 ? '#e74c3c' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
             
             const el = document.createElement('div');
@@ -69,10 +95,15 @@ function render() {
         });
 }
 
-
+/* ==========================================================
+   3. KONTROLLER VE BAŞLATICI
+   ========================================================== */
 function changeTime(r) { currentRange = r; updateBtn('.time-btn', event.target); fetchData(); }
 function changeMag(m) { currentMag = m; updateBtn('.mag-btn', event.target); render(); }
-function updateBtn(cls, target) { document.querySelectorAll(cls).forEach(b => b.classList.remove('btn-active')); target.classList.add('btn-active'); }
+function updateBtn(cls, target) { 
+    document.querySelectorAll(cls).forEach(b => b.classList.remove('btn-active')); 
+    if (target) target.classList.add('btn-active'); 
+}
 
 function toggleTheme() {
     const isDark = map.getStyle().name.includes('Dark');
@@ -81,7 +112,12 @@ function toggleTheme() {
 
 function toggleLegend() { 
     const l = document.getElementById('legend');
-    l.style.display = (l.style.display === 'block') ? 'none' : 'block';
+    if (l) l.style.display = (l.style.display === 'block') ? 'none' : 'block';
 }
 
-map.on('style.load', () => { map.setFog({}); rotate(); fetchData(); });
+// Harita ve Atmosfer hazır olduğunda başlat
+map.on('style.load', () => { 
+    map.setFog({}); 
+    rotateGlobe(); // Otomatik dönüşü başlat
+    fetchData(); 
+});
