@@ -1,64 +1,31 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sismik İzleme Platformu | Pro</title>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div id="map"></div>
+<div id="map"></div>
 
-    <div class="top-bar glass-effect">
-    <div class="live-indicator">
-        <span class="dot"></span> CANLI VERİ
+<div class="control-panel">
+    <div id="last-update">Veri yükleniyor...</div>
+    
+    <div class="filter-group">
+        <h4>Magnitüd</h4>
+        <button class="mag-btn btn-active" onclick="EarthquakeApp.changeMag(0, event)">Hepsi</button>
+        <button class="mag-btn" onclick="EarthquakeApp.changeMag(4.5, event)">4.5+</button>
+        <button class="mag-btn" onclick="EarthquakeApp.changeMag(6.0, event)">6.0+</button>
     </div>
-    <div id="last-update">--:--:--</div>
+
+    <div class="filter-group">
+        <h4>Zaman</h4>
+        <button class="time-btn" onclick="EarthquakeApp.changeTime('hour', event)">1 Saat</button>
+        <button class="time-btn btn-active" onclick="EarthquakeApp.changeTime('day', event)">24 Saat</button>
+        <button class="time-btn" onclick="EarthquakeApp.changeTime('week', event)">7 Gün</button>
+    </div>
+
+    <div class="action-group">
+        <button id="rotation-btn" onclick="EarthquakeApp.toggleRotation()">🌎 Durdur</button>
+        <button onclick="EarthquakeApp.toggleTheme()">🌓 Tema</button>
+    </div>
 </div>
 
+<div class="list-container">
+    <div id="list-count">0 Deprem</div>
+    <div id="earthquake-list"></div>
+</div>
 
-    <button id="theme-toggle" class="glass-effect corner-btn tr" onclick="toggleTheme()">🌓</button>
-    <button id="rotation-btn" class="glass-effect corner-btn tl" onclick="toggleRotation()">🌎 Durdur</button>
-    <button id="legend-btn" class="glass-effect corner-btn br" onclick="toggleLegend()">💡</button>
-
-    <div class="bottom-panel glass-effect">
-        <div class="filter-group">
-            <span class="label">Magnitüd (Mw)</span>
-            <div class="btn-row">
-                <button class="mag-btn btn-active" onclick="changeMag(0)">Hepsi</button>
-                <button class="mag-btn" onclick="changeMag(4.5)">4.5+</button>
-                <button class="mag-btn" onclick="changeMag(6.0)">6.0+</button>
-            </div>
-        </div>
-        <div class="filter-group">
-            <span class="label">Zaman Aralığı</span>
-            <div class="btn-row">
-                <button class="time-btn" onclick="changeTime('hour')">1 Saat</button>
-                <button class="time-btn btn-active" onclick="changeTime('day')">24 Saat</button>
-                <button class="time-btn" onclick="changeTime('week')">7 Gün</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="legend" class="legend-box glass-effect">
-        <h4>Magnitüd Ölçeği (Mw)</h4>
-        <div class="l-item"><span style="background:#2ecc71"></span> Mikro (&lt; 3.0)</div>
-        <div class="l-item"><span style="background:#f1c40f"></span> Küçük/Hafif (3.0 - 4.9)</div>
-        <div class="l-item"><span style="background:#e67e22"></span> Orta (5.0 - 5.9)</div>
-        <div class="l-item"><span style="background:#e74c3c"></span> Güçlü (6.0 - 6.9)</div>
-        <div class="l-item"><span style="background:#c0392b"></span> Büyük (7.0 - 7.9)</div>
-        <div class="l-item"><span style="background:#8e44ad"></span> Yıkıcı (&gt; 8.0)</div>
-    </div>
-
-    <div id="loader" class="loader-overlay">
-        <div class="spinner"></div>
-        <p>SİSMİK VERİLER YÜKLENİYOR</p>
-    </div>
-
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
-    <script src="script.js"></script>
-</body>
-</html>
-
+<div id="loader">Yükleniyor...</div>
