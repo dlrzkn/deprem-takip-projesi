@@ -4,21 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sismik İzleme Platformu</title>
-    
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    
-    <style>
-        body { margin: 0; padding: 0; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        .mapboxgl-popup { z-index: 9999; }
-    </style>
 </head>
 <body>
-
     <div id="map"></div>
 
-    <div class="top-controls" style="position: absolute; top: 20px; left: 20px; z-index: 100;">
+    <div class="top-controls">
         <button id="spin-btn" class="filter-btn btn-active">Otomatik Dönüş: AÇIK</button>
     </div>
 
@@ -31,7 +23,6 @@
                 <button class="filter-btn" onclick="changeTimeRange('week', this)">1 Hafta</button>
             </div>
         </div>
-
         <div class="filter-group">
             <div class="filter-label">Minimum Büyüklük</div>
             <div class="btn-row">
@@ -42,26 +33,25 @@
         </div>
     </div>
 
-    <div class="legend" id="legend">
-    <button id="legend-toggle" onclick="toggleLegend()">✕</button>
-    <h4>Büyüklük (Mw)</h4>
-    </div>
-<button id="legend-open-btn" onclick="toggleLegend()" style="display: none;">ℹ️</button>
-
-    <div class="legend">
-        <h4>Büyüklük (Mw)</h4>
-        <div><span style="background: #2ecc71;"></span> &lt; 3.0 Mikro</div>
-        <div><span style="background: #f1c40f;"></span> 3.0 - 4.9 Küçük</div>
-        <div><span style="background: #e67e22;"></span> 5.0 - 5.9 Orta</div>
-        <div><span style="background: #d35400;"></span> 6.0 - 6.9 Güçlü</div>
-        <div><span style="background: #e74c3c;"></span> 7.0 - 7.9 Büyük</div>
-        <div><span style="background: #8e44ad;"></span> &gt; 8.0 Mega</div>
-        <hr style="border: 0; border-top: 1px solid #333; margin: 8px 0;">
-        <div style="font-size: 10px; opacity: 0.6;">Kaynak: USGS</div>
+    <div class="legend-container">
+        <button id="legend-toggle-btn" onclick="toggleLegend()">ℹ️</button>
+        <div class="legend" id="legend-panel">
+            <div class="legend-header">
+                <h4>Büyüklük (Mw)</h4>
+                <button class="close-btn" onclick="toggleLegend()">✕</button>
+            </div>
+            <div><span style="background: #2ecc71;"></span> &lt; 3.0 Mikro</div>
+            <div><span style="background: #f1c40f;"></span> 3.0 - 4.9 Küçük</div>
+            <div><span style="background: #e67e22;"></span> 5.0 - 5.9 Orta</div>
+            <div><span style="background: #d35400;"></span> 6.0 - 6.9 Güçlü</div>
+            <div><span style="background: #e74c3c;"></span> 7.0 - 7.9 Büyük</div>
+            <div><span style="background: #8e44ad;"></span> &gt; 8.0 Mega</div>
+            <hr style="border: 0; border-top: 1px solid #333; margin: 8px 0;">
+            <div style="font-size: 10px; opacity: 0.6;">Kaynak: USGS</div>
+        </div>
     </div>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-
