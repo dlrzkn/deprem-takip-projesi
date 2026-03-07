@@ -13,7 +13,7 @@ let allData = [], markers = [], isRotating = true, currentMag = 0, currentRange 
 function rotate() {
     if (!isRotating || map.getZoom() > 5) return;
     const center = map.getCenter();
-    center.lng += 0.15;
+    center.lng -= 0.15;
     map.easeTo({ center, duration: 1000, easing: n => n });
 }
 map.on('moveend', () => { if(isRotating) rotate(); });
