@@ -74,3 +74,43 @@ body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: s
     display: flex;
     gap: 4px;
 }
+
+.legend {
+    transition: all 0.3s ease;
+    position: absolute;
+    bottom: 40px;
+    right: 20px;
+    /* Diğer mevcut stillerin... */
+}
+
+/* Panel kapalıyken sağa doğru kayıp gizlenecek */
+.legend.closed {
+    transform: translateX(250px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+#legend-toggle {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #ff9900;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#legend-open-btn {
+    position: absolute;
+    bottom: 40px;
+    right: 20px;
+    background: rgba(15, 15, 15, 0.9);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 101;
+    backdrop-filter: blur(10px);
+}
