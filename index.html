@@ -5,36 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sismik İzleme Platformu | Pro</title>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="map"></div>
 
     <div class="top-bar glass-effect">
-        <div class="live-indicator"><span class="dot"></span> CANLI VERİ</div>
+        <span class="dot"></span> <div class="live-indicator">CANLI SİSMİK VERİ</div>
         <div id="last-update">--:--:--</div>
     </div>
     
-    <button id="rotation-btn" class="glass-effect corner-btn tl" onclick="toggleRotation()">🌎 Durdur</button>
-
-    <button id="theme-toggle" class="glass-effect corner-btn tr" onclick="toggleTheme()">🌓</button>
-
-    <div id="legend" class="legend-box glass-effect">
-        <div class="label" style="margin-bottom:10px;">Büyüklük Ölçeği (Mw)</div>
-        <div class="l-item"><span style="background:#2ecc71"></span> <b>&lt; 3.0</b> Mikro</div>
-        <div class="l-item"><span style="background:#f1c40f"></span> <b>3.0 - 4.9</b> Küçük</div>
-        <div class="l-item"><span style="background:#e67e22"></span> <b>5.0 - 5.9</b> Orta</div>
-        <div class="l-item"><span style="background:#e74c3c"></span> <b>6.0 - 6.9</b> Güçlü</div>
-        <div class="l-item"><span style="background:#c0392b"></span> <b>7.0 - 7.9</b> Büyük</div>
+    <div class="top-right-group">
+        <button id="theme-toggle" class="glass-effect action-btn" onclick="toggleTheme()" title="Tema Değiştir">🌓</button>
+        <button id="rotation-btn" class="glass-effect action-btn" onclick="toggleRotation()" title="Dünyayı Durdur/Döndür">🌎</button>
     </div>
 
     <div id="earthquake-list-container" class="glass-effect">
-        <div class="list-header">
+        <div class="list-header" onclick="toggleList()" style="cursor:pointer;">
             <span>⚠️ Son Aktivite</span>
             <small id="list-count">0 Deprem</small>
         </div>
-        <div id="earthquake-list" class="style-scroll"></div>
+        <div id="earthquake-list" class="style-scroll">
+            </div>
     </div>
 
     <div class="bottom-panel glass-effect">
@@ -56,18 +49,23 @@
         </div>
     </div>
 
+    <div id="legend" class="legend-box glass-effect">
+        <div class="label" style="margin-bottom:12px; color:#ff9900; text-align:center;">JEOFİZİK MAGNİTÜD ÖLÇEĞİ</div>
+        <div class="l-item"><span style="background:#2ecc71"></span> Mikro (&lt; 3.0)</div>
+        <div class="l-item"><span style="background:#f1c40f"></span> Küçük (3.0 - 4.9)</div>
+        <div class="l-item"><span style="background:#e67e22"></span> Orta (5.0 - 5.9)</div>
+        <div class="l-item"><span style="background:#e74c3c"></span> Güçlü (6.0 - 6.9)</div>
+        <div class="l-item"><span style="background:#c0392b"></span> Büyük (7.0 - 7.9)</div>
+        <div class="l-item"><span style="background:#8e44ad"></span> Yıkıcı (&gt; 8.0)</div>
+    </div>
     <button id="legend-btn" class="glass-effect corner-btn br" onclick="toggleLegend()">💡</button>
 
     <div id="loader" class="loader-overlay">
         <div class="spinner"></div>
-        <p>SİSMİK VERİLER YÜKLENİYOR</p>
+        <p>SİSMİK VERİLER ANALİZ EDİLİYOR...</p>
     </div>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
