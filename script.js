@@ -7,7 +7,6 @@ const EarthquakeApp = {
     isRotating: true,
     isUserInteracting: false,
 
-    // 1. BAŞLATMA
     init() {
         mapboxgl.accessToken = this.accessToken;
         this.map = new mapboxgl.Map({
@@ -39,7 +38,6 @@ const EarthquakeApp = {
     },
 
     setupLayers() {
-        // Kümelenmiş Depremler
         this.map.addLayer({
             id: 'clusters',
             type: 'circle',
@@ -63,17 +61,13 @@ const EarthquakeApp = {
             }
         });
 
-        // Tekil Depremler
         this.map.addLayer({
             id: 'unclustered-point',
             type: 'circle',
             source: 'earthquakes',
             filter: ['!', ['has', 'point_count']],
             paint: {
-                'circle-color': [
-                    'step', ['get', 'mag'],
-                    '#2ecc71', 3, '#f1c40f', 5, '#e67e22', 7, '#c0392b'
-                ],
+                'circle-color': ['step', ['get', 'mag'], '#2ecc71', 3, '#f1c40f', 5, '#e67e22', 7, '#c0392b'],
                 'circle-radius': ['interpolate', ['linear'], ['get', 'mag'], 1, 4, 8, 20],
                 'circle-stroke-width': 1,
                 'circle-stroke-color': '#fff',
@@ -82,7 +76,6 @@ const EarthquakeApp = {
         });
     },
 
-    // 2. VERİ YÖNETİMİ
     calculateDistance(lat1, lon1, lat2, lon2) {
         const R = 6371; 
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -112,7 +105,6 @@ const EarthquakeApp = {
                 if (result.status === 'fulfilled') {
                     const sInfo = sources[index];
                     const data = result.value.features || (Array.isArray(result.value) ? result.value : []);
-                    
                     data.forEach(f => {
                         const props = f.properties || f;
                         const coords = f.geometry ? f.geometry.coordinates : [f.longitude, f.latitude];
@@ -174,16 +166,13 @@ const EarthquakeApp = {
         }
     },
 
-    // 3. ETKİLEŞİM
     setupInteractions() {
         this.map.on('click', 'unclustered-point', (e) => {
             const coordinates = e.features[0].geometry.coordinates.slice();
             const { mag, place, time, url, source } = e.features[0].properties;
-
             while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
                 coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
             }
-
             new mapboxgl.Popup({ offset: 15, closeButton: false })
                 .setLngLat(coordinates)
                 .setHTML(`
@@ -226,22 +215,36 @@ const EarthquakeApp = {
         rotate();
     },
 
-    // 4. UI GÜNCELLEME
+    toggleRotation() {
+        this.isRotating = !this.isRotating;
+        const btn = document.getElementById('rotation-btn');
+        if (btn) {
+            btn.innerHTML = this.isRotating ? '🌎 Durdur' : '🔄 Döndür';
+            btn.classList.toggle('btn-active', this.isRotating);
+        }
+        if (this.isRotating) {
+            this.isUserInteracting = false;
+            const center = this.map.getCenter();
+            center.lng -= 0.1;
+            this.map.easeTo({ center, duration: 100 });
+        }
+    },
+
     updateUIStats() {
         const stats = this.allData.reduce((acc, curr) => {
             acc[curr.properties.source] = (acc[curr.properties.source] || 0) + 1;
             return acc;
         }, {});
-
         const updateEl = document.getElementById('last-update');
         if (updateEl) {
-            updateEl.innerHTML = `E: ${stats.EMSC || 0} U: ${stats.USGS || 0} G: ${stats.GFZ || 0} | ${new Date().toLocaleTimeString('tr-TR')}`;
+            updateEl.innerHTML = `<span class="stat-tag">E:${stats.EMSC || 0}</span> <span class="stat-tag">U:${stats.USGS || 0}</span> <span class="stat-tag">G:${stats.GFZ || 0}</span> | ${new Date().toLocaleTimeString('tr-TR')}`;
         }
         this.renderList();
     },
 
     renderList() {
         const listContainer = document.getElementById('earthquake-list');
+        const countEl = document.getElementById('list-count');
         if (!listContainer) return;
         listContainer.innerHTML = '';
         
@@ -249,19 +252,22 @@ const EarthquakeApp = {
             .filter(f => f.properties.mag >= this.currentMag)
             .sort((a, b) => b.properties.time - a.properties.time);
 
+        if (countEl) countEl.innerText = `${filteredData.length} Deprem`;
+
         filteredData.slice(0, 40).forEach(f => {
-            const { mag, place, time } = f.properties;
+            const { mag, place, time, source } = f.properties;
             const color = mag >= 7 ? '#c0392b' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
             const item = document.createElement('div');
             item.className = 'list-item';
             item.innerHTML = `
-                <div style="display:flex; justify-content:space-between;">
-                    <b style="color:${color}">${mag.toFixed(1)}</b>
-                    <small>${new Date(time).toLocaleTimeString('tr-TR')}</small>
+                <div class="list-item-header">
+                    <span class="mag-badge" style="color:${color}">${mag.toFixed(1)}</span>
+                    <span class="source-label">${source}</span>
                 </div>
-                <div style="font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${place}</div>
+                <div class="place-text" title="${place}">${place}</div>
+                <div class="time-text">${new Date(time).toLocaleTimeString('tr-TR')}</div>
             `;
-            item.onclick = () => this.map.flyTo({ center: f.geometry.coordinates, zoom: 8 });
+            item.onclick = () => this.map.flyTo({ center: f.geometry.coordinates, zoom: 8, essential: true });
             listContainer.appendChild(item);
         });
     },
@@ -295,8 +301,6 @@ const EarthquakeApp = {
     }
 };
 
-// ÇALIŞTIR
 EarthquakeApp.init();
 setInterval(() => EarthquakeApp.fetchData(), 120000);
-
 
