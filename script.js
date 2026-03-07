@@ -140,3 +140,14 @@ map.on('style.load', () => {
     rotateGlobe();
     fetchData(); 
 });
+
+
+
+function toggleFilterPanel() {
+    const panel = document.getElementById('filter-panel');
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'flex';
+    } else {
+        panel.style.display = 'none';
+    }
+}
