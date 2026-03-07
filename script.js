@@ -1,7 +1,7 @@
 /* ==========================================================
    1. HARİTA AYARLARI (KÜRE MODU AKTİF)
    ========================================================== */
-mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtN2R2YXoybjAybG8ycXF6Mzh3dzBqZ3cifQ.x-G8m_H0o90S1u7T-7G9Yg';
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
 
 const map = new mapboxgl.Map({
     container: 'map',
