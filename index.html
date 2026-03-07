@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sismik Takip Platformu | Dashboard</title>
+    <title>Sismik Dashboard</title>
     
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css' rel='stylesheet' />
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js'></script>
@@ -18,7 +18,7 @@
         <div id="last-update">Veri senkronize ediliyor...</div>
         
         <div class="filter-group">
-            <h4>Magnitüd (Mw)</h4>
+            <h4>Büyüklük (Mw)</h4>
             <div class="btn-grid">
                 <button class="mag-btn btn-active" onclick="EarthquakeApp.changeMag(0, event)">Hepsi</button>
                 <button class="mag-btn" onclick="EarthquakeApp.changeMag(4.5, event)">4.5+</button>
@@ -42,8 +42,7 @@
 
         <div class="sidebar-list-container">
             <div id="list-count">Depremler</div>
-            <div id="earthquake-list">
-                </div>
+            <div id="earthquake-list"></div>
         </div>
     </div>
 
@@ -52,7 +51,5 @@
     </div>
 
     <script src="script.js"></script>
-
 </body>
 </html>
-
