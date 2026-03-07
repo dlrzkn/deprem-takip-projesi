@@ -12,7 +12,7 @@ map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
 let spinEnabled = true;
 let userInteracting = false;
-let currentRange = 'day'; // Varsayılan zaman aralığı
+let currentRange = 'day';
 
 const timeURLs = {
     'hour': 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson',
@@ -56,11 +56,12 @@ async function updateQuakes() {
                 }
             });
         }
-    } catch (e) { console.error("Veri çekme hatası:", e); }
+    } catch (e) { console.error("Hata:", e); }
 }
 
 
-// --- POP-UP VE TIKLAMA ---
+
+
 map.on('click', 'usgs-viz', (e) => {
     const feature = e.features[0]; 
     const props = feature.properties;
@@ -83,7 +84,7 @@ map.on('click', 'usgs-viz', (e) => {
                         <span style="font-weight: bold;">${depth.toFixed(1)} km</span>
                     </div>
                 </div>
-                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 11px; margin-top: 10px;">USGS Detayı →</a>
+                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 11px; margin-top: 10px;">Detay →</a>
             </div>
         `).addTo(map);
 });
@@ -91,20 +92,17 @@ map.on('click', 'usgs-viz', (e) => {
 map.on('mousemove', 'usgs-viz', () => { map.getCanvas().style.cursor = 'pointer'; });
 map.on('mouseleave', 'usgs-viz', () => { map.getCanvas().style.cursor = ''; });
 
-// --- FONKSİYONLAR ---
 window.changeTimeRange = function(range, btnElement) {
     currentRange = range;
     updateQuakes();
-    const parent = btnElement.parentElement;
-    parent.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('btn-active'));
+    btnElement.parentElement.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('btn-active'));
     btnElement.classList.add('btn-active');
 };
 
 window.filterMag = function(minMag, btnElement) {
     if (map.getLayer('usgs-viz')) {
         map.setFilter('usgs-viz', ['>=', ['get', 'mag'], minMag]);
-        const parent = btnElement.parentElement;
-        parent.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('btn-active'));
+        btnElement.parentElement.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('btn-active'));
         btnElement.classList.add('btn-active');
     }
 };
@@ -117,11 +115,9 @@ function rotateGlobe() {
     }
 }
 
-// --- OLAY İZLEYİCİLER ---
 map.on('moveend', () => { if (!userInteracting && spinEnabled) rotateGlobe(); });
 map.on('mousedown', () => { userInteracting = true; });
 map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
-map.on('wheel', () => { userInteracting = true; setTimeout(() => { userInteracting = false; }, 2000); });
 
 map.on('load', () => {
     updateQuakes();
@@ -129,13 +125,9 @@ map.on('load', () => {
     setInterval(updateQuakes, 60000);
 });
 
-const spinBtn = document.getElementById('spin-btn');
-if (spinBtn) {
-    spinBtn.onclick = () => {
-        spinEnabled = !spinEnabled;
-        spinBtn.textContent = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
-        spinBtn.classList.toggle('btn-active', spinEnabled);
-        if (spinEnabled) rotateGlobe();
-    };
-}
+document.getElementById('spin-btn').onclick = function() {
+    spinEnabled = !spinEnabled;
+    this.textContent = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
+    this.classList.toggle('btn-active', spinEnabled);
+};
 
