@@ -12,23 +12,19 @@ const map = new mapboxgl.Map({
 let allData = [], markers = [], isRotating = true, currentMag = 0, currentRange = 'day';
 
 /* ==========================================================
-   1. AKILLI DÜNYA DÖNÜŞ MOTORU (Eski Projedeki Mantık)
+   1. AKILLI DÜNYA DÖNÜŞ MOTORU
    ========================================================== */
 function rotateGlobe() {
-    // Eğer kullanıcı durdurduysa veya çok yakındaysa dönme
     if (!isRotating || map.getZoom() > 5) return;
-    
     const center = map.getCenter();
-    center.lng += 0.15; // Akıcı ve profesyonel bir dönüş hızı
+    center.lng += 0.15;
     map.easeTo({ center, duration: 1000, easing: n => n });
 }
 
-// Harita her hareketini bitirdiğinde (eğer dönüş açıksa) tekrar tetikle
 map.on('moveend', () => { 
     if (isRotating) rotateGlobe(); 
 });
 
-// Durdur/Döndür butonu işlevi
 function toggleRotation() {
     isRotating = !isRotating;
     const btn = document.getElementById('rotation-btn');
@@ -61,24 +57,26 @@ async function fetchData() {
 }
 
 function render() {
+    // Eski markerları temizle
     markers.forEach(m => m.remove());
+    markers = [];
+
     markers = allData
         .filter(f => f.properties.mag >= currentMag)
         .map(f => {
             const mag = f.properties.mag;
             const props = f.properties;
             const coords = f.geometry.coordinates; // [boylam, enlem, derinlik]
-            const depth = coords[2] || 0; // Derinlik bilgisi
+            const depth = coords[2] || 0;
             
-            // 1. Bilimsel Renk Skalası (USGS Standartları)
+            // Bilimsel Renk Skalası
             const color = mag >= 8 ? '#8e44ad' : 
                           mag >= 7 ? '#c0392b' : 
                           mag >= 6 ? '#e74c3c' : 
                           mag >= 5 ? '#e67e22' : 
                           mag >= 3 ? '#f1c40f' : '#2ecc71';
             
-            // 2. Görsel Derinlik Efekti (Jeofiziksel Dokunuş)
-            // Sığ depremler keskin ve parlak; derin depremler puslu ve gölgeli görünür.
+            // Jeofiziksel Derinlik Efekti
             const blurAmount = Math.min(depth / 50, 5); 
             const glowSize = Math.max(10 - (depth / 20), 2); 
             
@@ -116,38 +114,12 @@ function render() {
         });
 }
 
-            
-            // USGS ve Jeofizik Standartlarında Renk Skalası
-            const color = mag >= 8 ? '#8e44ad' : mag >= 7 ? '#c0392b' : mag >= 6 ? '#e74c3c' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
-            
-            const el = document.createElement('div');
-            el.className = 'sismic-marker';
-            el.style.cssText = `background:${color}; width:${mag*3+6}px; height:${mag*3+6}px;`;
-
-            return new mapboxgl.Marker(el)
-                .setLngLat([coords[0], coords[1]])
-                .setPopup(new mapboxgl.Popup({ offset: 15 }).setHTML(`
-                    <div class="pro-popup-content">
-                        <div class="popup-header" style="background:${color};">
-                            Mw ${mag.toFixed(1)}
-                        </div>
-                        <div class="popup-body">
-                            <strong>${props.place}</strong>
-                            <p>📏 <b>Derinlik:</b> ${coords[2] ? coords[2].toFixed(1) : '0'} km</p>
-                            <p>🕒 <b>Zaman:</b> ${new Date(props.time).toLocaleString('tr-TR')}</p>
-                            <a href="${props.url}" target="_blank" class="usgs-link-btn">USGS ANALİZİ ↗</a>
-                        </div>
-                    </div>
-                `))
-                .addTo(map);
-        });
-}
-
 /* ==========================================================
    3. KONTROLLER VE BAŞLATICI
    ========================================================== */
 function changeTime(r) { currentRange = r; updateBtn('.time-btn', event.target); fetchData(); }
 function changeMag(m) { currentMag = m; updateBtn('.mag-btn', event.target); render(); }
+
 function updateBtn(cls, target) { 
     document.querySelectorAll(cls).forEach(b => b.classList.remove('btn-active')); 
     if (target) target.classList.add('btn-active'); 
@@ -163,9 +135,8 @@ function toggleLegend() {
     if (l) l.style.display = (l.style.display === 'block') ? 'none' : 'block';
 }
 
-// Harita ve Atmosfer hazır olduğunda başlat
 map.on('style.load', () => { 
     map.setFog({}); 
-    rotateGlobe(); // Otomatik dönüşü başlat
+    rotateGlobe();
     fetchData(); 
 });
