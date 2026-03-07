@@ -6,15 +6,11 @@
     <title>Sismik İzleme Platformu</title>
     
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
-    
     <link rel="stylesheet" href="style.css">
     
     <style>
-        /* Haritanın tam ekran olmasını garanti altına alalım */
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        
-        /* Pop-up'ların görünürlüğünü CSS ile güçlendirelim */
         .mapboxgl-popup { z-index: 9999; }
     </style>
 </head>
@@ -22,12 +18,27 @@
 
     <div id="map"></div>
 
-    <div class="control-panel">
+    <div class="top-controls" style="position: absolute; top: 20px; left: 20px; z-index: 100;">
         <button id="spin-btn" class="filter-btn btn-active">Otomatik Dönüş: AÇIK</button>
-        <div style="margin-top: 10px; display: flex; gap: 5px;">
-            <button class="filter-btn btn-active" onclick="filterMag(0, this)">Hepsi</button>
-            <button class="filter-btn" onclick="filterMag(4.5, this)">M 4.5+</button>
-            <button class="filter-btn" onclick="filterMag(6.0, this)">M 6.0+</button>
+    </div>
+
+    <div class="bottom-controls">
+        <div class="filter-group">
+            <div class="filter-label">Zaman Aralığı</div>
+            <div class="btn-row">
+                <button class="filter-btn" onclick="changeTimeRange('hour', this)">1 Saat</button>
+                <button class="filter-btn btn-active" onclick="changeTimeRange('day', this)">1 Gün</button>
+                <button class="filter-btn" onclick="changeTimeRange('week', this)">1 Hafta</button>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <div class="filter-label">Minimum Büyüklük</div>
+            <div class="btn-row">
+                <button class="filter-btn btn-active" onclick="filterMag(0, this)">Hepsi</button>
+                <button class="filter-btn" onclick="filterMag(4.5, this)">4.5+</button>
+                <button class="filter-btn" onclick="filterMag(6.0, this)">6.0+</button>
+            </div>
         </div>
     </div>
 
@@ -40,35 +51,11 @@
         <div><span style="background: #e74c3c;"></span> 7.0 - 7.9 Büyük</div>
         <div><span style="background: #8e44ad;"></span> &gt; 8.0 Mega</div>
         <hr style="border: 0; border-top: 1px solid #333; margin: 8px 0;">
-        <div style="font-size: 10px; opacity: 0.6;">Kaynak: USGS / NEIC</div>
+        <div style="font-size: 10px; opacity: 0.6;">Kaynak: USGS</div>
     </div>
-    
-<div class="bottom-controls">
-    <div class="filter-group">
-        <div class="filter-label">Zaman Aralığı</div>
-        <div class="btn-row">
-            <button class="filter-btn" onclick="changeTimeRange('hour', this)">1 Saat</button>
-            <button class="filter-btn btn-active" onclick="changeTimeRange('day', this)">1 Gün</button>
-            <button class="filter-btn" onclick="changeTimeRange('week', this)">1 Hafta</button>
-        </div>
-    </div>
-
-    <div class="filter-group">
-        <div class="filter-label">Minimum Büyüklük</div>
-        <div class="btn-row">
-            <button class="filter-btn btn-active" onclick="filterMag(0, this)">Hepsi</button>
-            <button class="filter-btn" onclick="filterMag(4.5, this)">4.5+</button>
-            <button class="filter-btn" onclick="filterMag(6.0, this)">6.0+</button>
-        </div>
-    </div>
-</div>
-
-
-  
-
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
-    
     <script src="script.js"></script>
 </body>
 </html>
+
