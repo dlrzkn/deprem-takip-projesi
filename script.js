@@ -93,18 +93,68 @@ function smartDeduplicate(data) {
 
 // 3. EKRANA BASMA (Render)
 function render() {
+    // Mevcut markerları temizle
     markers.forEach(m => m.remove());
+    markers = [];
+
+    // Veri yoksa işlemi durdur
+    if (!allData || allData.length === 0) return;
+
     markers = allData
-        .filter(f => f.properties.mag >= currentMag)
+        .filter(f => {
+            // Güvenli magnitüd kontrolü
+            const m = parseFloat(f.properties?.mag || 0);
+            return m >= currentMag;
+        })
         .map(f => {
-            const { mag, place, time, url } = f.properties;
-            const source = f.sourceId;
-            // Renk paleti
+            // Verileri güvenli bir şekilde değişkenlere ata (Optional Chaining kullanarak)
+            const mag = parseFloat(f.properties?.mag || 0);
+            const place = f.properties?.place || "Bilinmeyen Bölge";
+            const time = f.properties?.time;
+            const url = f.properties?.url || "#";
+            const source = f.sourceId || "Bilinmiyor";
+
+            // Büyüklüğe göre ana renk belirleme
             const color = mag >= 7 ? '#c0392b' : mag >= 6 ? '#e74c3c' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
 
+            // Marker elementi oluşturma
             const el = document.createElement('div');
             el.className = 'sismic-marker';
-            el.style.cssText = `background:${color}; width:${mag * 3.5 + 7}px; height:${mag * 3.5 + 7}px;`;
+            
+            // Marker boyutu ve stili
+            const size = Math.max(mag * 4 + 8, 10); // Çok küçük depremlerde bile görünür kalması için alt limit
+            el.style.cssText = `
+                background: ${color}; 
+                width: ${size}px; 
+                height: ${size}px;
+                border: 2px solid rgba(255,255,255,0.4);
+                box-shadow: 0 0 15px ${color}88;
+            `;
+
+            // Popup içeriği (Daha önce CSS'e eklediğimiz .source-tag sınıflarını kullanır)
+            const popupHTML = `
+                <div style="font-family:'Inter', sans-serif; min-width:180px; padding:2px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span class="source-tag tag-${source.toLowerCase()}" style="font-size:10px; font-weight:800;">${source}</span>
+                        <span style="font-size:16px; font-weight:900; color:${color}">${mag.toFixed(1)} Mw</span>
+                    </div>
+                    <strong style="display:block; font-size:13px; margin-bottom:6px; color:#333;">${place}</strong>
+                    <div style="font-size:11px; color:#666; margin-bottom:10px; border-top:1px solid #eee; pt-5">
+                        ${time ? new Date(time).toLocaleString('tr-TR') : 'Zaman Bilgisi Yok'}
+                    </div>
+                    <a href="${url}" target="_blank" style="display:block; text-align:center; background:#1a1a1a; color:#fff; text-decoration:none; padding:8px; border-radius:6px; font-size:11px; font-weight:bold; transition:0.3s;">
+                        DETAYLARI GÖR ↗
+                    </a>
+                </div>
+            `;
+
+            // Haritaya ekleme
+            return new mapboxgl.Marker(el)
+                .setLngLat(f.geometry.coordinates)
+                .setPopup(new mapboxgl.Popup({ offset: 20, closeButton: false }).setHTML(popupHTML))
+                .addTo(map);
+        });
+}
 
             // Popup İçeriği (CSS'teki .source-tag sınıflarını kullanır)
             const popupHTML = `
