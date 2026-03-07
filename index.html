@@ -3,17 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sismik İzleme Platformu</title>
+    <title>Sismik İzleme Platformu | Canlı Deprem Takibi</title>
     
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div id="map"></div>
 
+    <div class="top-bar">
+        <div class="live-indicator">
+            <span class="dot"></span> CANLI VERİ
+        </div>
+        <div id="last-update" class="update-text">Son Güncelleme: --:--</div>
+    </div>
+
     <div class="bottom-controls">
-        <div class="filter-group">
+        <div class="filter-group glass-effect">
             <div class="filter-label">Büyüklük Filtresi</div>
             <div class="btn-row">
                 <button class="filter-btn btn-active" onclick="filterMag(0)">Hepsi</button>
@@ -24,24 +34,34 @@
         </div>
     </div>
 
-    <div class="legend-container">
-        <button id="legend-toggle-btn" onclick="toggleLegend()">i</button>
+    <div class="legend-wrapper">
+        <button id="legend-toggle-btn" class="glass-effect" onclick="toggleLegend()" title="Bilgi Paneli">i</button>
         
-        <div class="legend" id="legend-panel">
+        <div class="legend glass-effect" id="legend-panel">
             <div class="legend-header">
-                <h4>Büyüklük (Mw)</h4>
+                <h4>Deprem Şiddeti</h4>
+                <p>Mw Ölçeğine Göre</p>
             </div>
             
-            <div><span style="background: #2ecc71;"></span> &lt; 3.0</div>
-            <div><span style="background: #f1c40f;"></span> 3.0 - 5.0</div>
-            <div><span style="background: #e67e22;"></span> 5.0 - 6.0</div>
-            <div><span style="background: #d35400;"></span> 6.0 - 7.0</div>
-            <div><span style="background: #e74c3c;"></span> 7.0 - 8.0</div>
-            <div><span style="background: #8e44ad;"></span> &gt; 8.0</div>
+            <div class="legend-items">
+                <div class="l-item"><span style="background: #2ecc71;"></span> Mikro (&lt; 3.0)</div>
+                <div class="l-item"><span style="background: #f1c40f;"></span> Hafif (3.0 - 5.0)</div>
+                <div class="l-item"><span style="background: #e67e22;"></span> Orta (5.0 - 6.0)</div>
+                <div class="l-item"><span style="background: #d35400;"></span> Güçlü (6.0 - 7.0)</div>
+                <div class="l-item"><span style="background: #e74c3c;"></span> Şiddetli (7.0 - 8.0)</div>
+                <div class="l-item"><span style="background: #8e44ad;"></span> Yıkıcı (&gt; 8.0)</div>
+            </div>
             
-            <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
-            <div style="font-size: 10px; opacity: 0.6;">Kaynak: USGS</div>
+            <div class="legend-footer">
+                <hr>
+                <p>Kaynak: Kandilli Rasathanesi & USGS</p>
+            </div>
         </div>
+    </div>
+
+    <div id="loader" class="loader-wrapper">
+        <div class="spinner"></div>
+        <p>Sismik veriler yükleniyor...</p>
     </div>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
