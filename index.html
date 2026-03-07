@@ -12,25 +12,30 @@
     <div id="map"></div>
 
     <div class="top-bar glass-effect">
-    <div class="live-indicator">
-        <span class="dot"></span> CANLI VERİ
+        <div class="live-indicator"><span class="dot"></span> CANLI VERİ</div>
+        <div id="last-update">--:--:--</div>
     </div>
-    <div id="last-update">--:--:--</div>
-</div>
     
-<div id="earthquake-list-container" class="glass-effect">
-    <div class="list-header">
-        <span>⚠️ Son Aktivite</span>
-        <small id="list-count">0 Deprem</small>
-    </div>
-    <div id="earthquake-list" class="style-scroll">
-        </div>
-</div>
-
+    <button id="rotation-btn" class="glass-effect corner-btn tl" onclick="toggleRotation()">🌎 Durdur</button>
 
     <button id="theme-toggle" class="glass-effect corner-btn tr" onclick="toggleTheme()">🌓</button>
-    <button id="rotation-btn" class="glass-effect corner-btn tl" onclick="toggleRotation()">🌎 Durdur</button>
-    <button id="legend-btn" class="glass-effect corner-btn br" onclick="toggleLegend()">💡</button>
+
+    <div id="legend" class="legend-box glass-effect">
+        <div class="label" style="margin-bottom:10px;">Büyüklük Ölçeği (Mw)</div>
+        <div class="l-item"><span style="background:#2ecc71"></span> <b>&lt; 3.0</b> Mikro</div>
+        <div class="l-item"><span style="background:#f1c40f"></span> <b>3.0 - 4.9</b> Küçük</div>
+        <div class="l-item"><span style="background:#e67e22"></span> <b>5.0 - 5.9</b> Orta</div>
+        <div class="l-item"><span style="background:#e74c3c"></span> <b>6.0 - 6.9</b> Güçlü</div>
+        <div class="l-item"><span style="background:#c0392b"></span> <b>7.0 - 7.9</b> Büyük</div>
+    </div>
+
+    <div id="earthquake-list-container" class="glass-effect">
+        <div class="list-header">
+            <span>⚠️ Son Aktivite</span>
+            <small id="list-count">0 Deprem</small>
+        </div>
+        <div id="earthquake-list" class="style-scroll"></div>
+    </div>
 
     <div class="bottom-panel glass-effect">
         <div class="filter-group">
@@ -44,22 +49,14 @@
         <div class="filter-group">
             <span class="label">Zaman Aralığı</span>
             <div class="btn-row">
-                <button class="time-btn" onclick="changeTime('hour')">1 Saat</button>
-                <button class="time-btn btn-active" onclick="changeTime('day')">24 Saat</button>
-                <button class="time-btn" onclick="changeTime('week')">7 Gün</button>
+                <button class="time-btn" onclick="changeTime('hour')">1S</button>
+                <button class="time-btn btn-active" onclick="changeTime('day')">24S</button>
+                <button class="time-btn" onclick="changeTime('week')">7G</button>
             </div>
         </div>
     </div>
 
-    <div id="legend" class="legend-box glass-effect">
-        <h4>Magnitüd Ölçeği (Mw)</h4>
-        <div class="l-item"><span style="background:#2ecc71"></span> Mikro (&lt; 3.0)</div>
-        <div class="l-item"><span style="background:#f1c40f"></span> Küçük/Hafif (3.0 - 4.9)</div>
-        <div class="l-item"><span style="background:#e67e22"></span> Orta (5.0 - 5.9)</div>
-        <div class="l-item"><span style="background:#e74c3c"></span> Güçlü (6.0 - 6.9)</div>
-        <div class="l-item"><span style="background:#c0392b"></span> Büyük (7.0 - 7.9)</div>
-        <div class="l-item"><span style="background:#8e44ad"></span> Yıkıcı (&gt; 8.0)</div>
-    </div>
+    <button id="legend-btn" class="glass-effect corner-btn br" onclick="toggleLegend()">💡</button>
 
     <div id="loader" class="loader-overlay">
         <div class="spinner"></div>
@@ -70,7 +67,6 @@
     <script src="script.js"></script>
 </body>
 </html>
-
 
 
 
