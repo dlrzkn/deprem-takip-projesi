@@ -1,17 +1,55 @@
-body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+/* Temel Sıfırlama */
+body, html { 
+    margin: 0; 
+    padding: 0; 
+    height: 100%; 
+    width: 100%;
+    overflow: hidden; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
+/* Harita */
+#map { 
+    position: absolute; 
+    top: 0; 
+    bottom: 0; 
+    width: 100%; 
+    height: 100%;
+}
+
+/* Sol Üst Kontrol Paneli */
 .control-panel {
     position: absolute;
     top: 20px;
     left: 20px;
     background: rgba(255, 255, 255, 0.9);
     padding: 15px;
-    border-radius: 8px;
-    z-index: 1;
-    width: 250px;
+    border-radius: 12px;
+    z-index: 10;
+    width: 240px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    backdrop-filter: blur(5px);
 }
 
+.filter-group { margin-bottom: 15px; }
+.filter-group h4 { margin: 0 0 8px 0; font-size: 13px; color: #333; text-transform: uppercase; }
+
+/* Butonlar */
+button {
+    cursor: pointer;
+    border: 1px solid #ddd;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin: 2px;
+    font-size: 11px;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+button:hover { background: #f0f0f0; }
+.btn-active { background: #2c3e50 !important; color: white !important; border-color: #2c3e50 !important; }
+
+/* Sağdaki Deprem Listesi */
 .list-container {
     position: absolute;
     top: 20px;
@@ -19,10 +57,66 @@ body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
     bottom: 20px;
     width: 300px;
     background: rgba(255, 255, 255, 0.9);
-    overflow-y: auto;
-    z-index: 1;
-    border-radius: 8px;
+    z-index: 10;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    backdrop-filter: blur(5px);
 }
 
-.btn-active { background: #2c3e50; color: white; }
-.stat-tag { font-weight: bold; margin-right: 5px; }
+#list-count {
+    padding: 12px;
+    background: #2c3e50;
+    color: white;
+    border-radius: 12px 12px 0 0;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#earthquake-list {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+/* Liste Elemanları */
+.list-item {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.list-item:hover { background: rgba(0,0,0,0.05); }
+
+/* İstatistik ve Güncelleme Bilgisi */
+#last-update {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+.stat-tag {
+    display: inline-block;
+    background: #e1e8ed;
+    padding: 2px 5px;
+    border-radius: 4px;
+    margin-right: 3px;
+    font-weight: bold;
+}
+
+/* Yükleme Ekranı */
+#loader {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    font-weight: bold;
+}
