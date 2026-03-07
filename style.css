@@ -40,3 +40,4 @@ body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: s
 .legend h4 { margin: 0 0 10px 0; color: #ff9900; font-size: 14px; }
 .legend div { display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; }
 .legend span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 10px; }
+.mapboxgl-popup { color: #000; z-index: 9999; }
