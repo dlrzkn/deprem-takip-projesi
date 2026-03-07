@@ -1,3 +1,17 @@
+// Mapbox Token
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
+
+const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: [35, 39], 
+    zoom: 2.2, 
+    projection: 'globe'
+});
+
+let allData = [], markers = [], isRotating = true, currentMag = 0, currentRange = 'day', isUserInteracting = false;
+
+// 1. BÖLÜM: VERİ ÇEKME VE STANDARDİZASYON
 async function fetchData() {
     const loader = document.getElementById('loader');
     if(loader) loader.style.display = 'flex';
@@ -32,7 +46,7 @@ async function fetchData() {
                         geometry: { type: 'Point', coordinates: [parseFloat(coords[0]), parseFloat(coords[1])] },
                         properties: {
                             mag: parseFloat(props.mag || props.magnitude || 0),
-                            // EMSC 'region' anahtarını yakalayarak hatayı çözen kısım:
+                            // "Bilinmeyen Bölge" hatasını burası çözer:
                             place: props.place || props.region || props.flynn_region || "Bilinmeyen Bölge",
                             time: new Date(props.time || props.m_time).getTime(),
                             url: customUrl || "#"
@@ -53,8 +67,7 @@ async function fetchData() {
     finally { if(loader) loader.style.display = 'none'; }
 }
 
-
-
+// 2. BÖLÜM: FİLTRELEME VE GÖRSELLEŞTİRME
 function smartDeduplicate(data) {
     data.sort((a, b) => a.priority - b.priority);
     const final = [];
@@ -104,36 +117,15 @@ function render() {
     updateList(filteredData);
 }
 
-
-
-let isUserInteracting = false;
-
-map.on('mousedown', () => { isUserInteracting = true; });
-map.on('touchstart', () => { isUserInteracting = true; });
-map.on('mouseup', () => { isUserInteracting = false; if(isRotating) rotate(); });
-map.on('touchend', () => { isUserInteracting = false; if(isRotating) rotate(); });
-
-function rotate() {
-    if (!isRotating || map.getZoom() > 5 || isUserInteracting) return;
-    const center = map.getCenter();
-    center.lng -= 1.2;
-    map.easeTo({ center, duration: 1000, easing: n => n });
-}
-
-map.on('moveend', () => { if (isRotating && !isUserInteracting) rotate(); });
-
-function toggleRotation() {
-    isRotating = !isRotating;
-    document.getElementById('rotation-btn').innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür';
-    if (isRotating) { isUserInteracting = false; rotate(); }
-}
-
+// 3. BÖLÜM: ETKİLEŞİM VE YARDIMCILAR
 function updateList(data) {
     const listContainer = document.getElementById('earthquake-list');
     const countEl = document.getElementById('list-count');
     if (!listContainer) return;
     listContainer.innerHTML = '';
     const sortedData = [...data].sort((a, b) => b.properties.time - a.properties.time);
+    
+    // Sayaç güncellemesi:
     if (countEl) countEl.innerText = `${sortedData.length} Deprem`;
 
     sortedData.slice(0, 30).forEach(f => {
@@ -157,7 +149,26 @@ function updateList(data) {
     });
 }
 
-// Diğer yardımcılar
+// AKILLI ROTASYON
+map.on('mousedown', () => { isUserInteracting = true; });
+map.on('touchstart', () => { isUserInteracting = true; });
+map.on('mouseup', () => { isUserInteracting = false; if(isRotating) rotate(); });
+map.on('touchend', () => { isUserInteracting = false; if(isRotating) rotate(); });
+
+function rotate() {
+    if (!isRotating || map.getZoom() > 5 || isUserInteracting) return;
+    const center = map.getCenter();
+    center.lng -= 1.2;
+    map.easeTo({ center, duration: 1000, easing: n => n });
+}
+map.on('moveend', () => { if (isRotating && !isUserInteracting) rotate(); });
+
+function toggleRotation() {
+    isRotating = !isRotating;
+    document.getElementById('rotation-btn').innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür';
+    if (isRotating) { isUserInteracting = false; rotate(); }
+}
+
 function changeTime(r) { currentRange = r; updateBtn('.time-btn', event.target); fetchData(); }
 function changeMag(m) { currentMag = m; updateBtn('.mag-btn', event.target); render(); }
 function updateBtn(cls, target) { document.querySelectorAll(cls).forEach(b => b.classList.remove('btn-active')); if(target) target.classList.add('btn-active'); }
