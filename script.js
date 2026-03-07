@@ -182,7 +182,7 @@ const EarthquakeApp = {
         if (!this.isRotating || this.map.getZoom() > 5 || this.isUserInteracting) return;
         
         const center = this.map.getCenter();
-        center.lng -= 120; // Büyük bir adım atıyoruz
+        center.lng -= 50; // Büyük bir adım atıyoruz
         
         this.map.easeTo({
             center,
