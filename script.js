@@ -1,103 +1,144 @@
 /* ==========================================================
-   1. HARİTA AYARLARI (KÜRE MODU YENİDEN AKTİF)
+   1. HARİTA AYARLARI (YENİ TOKEN)
    ========================================================== */
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
 
 const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
-    center: [35.24, 38.96],
-    zoom: 1.5, // Küre etkisini görmek için biraz uzaktan başla
-    projection: 'globe' // İşte o sevdiğin küre modu!
+    center: [35, 39],
+    zoom: 2,
+    projection: 'globe'
 });
 
 let allQuakes = [];
-let markers = [];
+let currentMarkers = [];
+let isRotating = true;
+let currentMinMag = 0;
 
 /* ==========================================================
-   2. LOADER VE VERİ YÖNETİMİ (BEKLEME YOK)
+   2. DÜNYA DÖNÜŞÜ (AKILLI DURDURMA)
    ========================================================== */
-function hideLoader() {
-    const loader = document.getElementById('loader');
-    if (loader) {
-        loader.style.opacity = '0';
-        setTimeout(() => { loader.style.display = 'none'; }, 300);
-    }
+function rotateGlobe() {
+    if (!isRotating || map.getZoom() >= 5) return;
+    const center = map.getCenter();
+    center.lng += 0.2;
+    map.setCenter(center);
 }
 
-async function fetchUSGS() {
+map.on('moveend', rotateGlobe);
+
+function toggleRotation() {
+    isRotating = !isRotating;
+    document.getElementById('rotation-btn').innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür';
+    if (isRotating) rotateGlobe();
+}
+
+/* ==========================================================
+   3. VERİ ÇEKME (BEKLEME SÜRESİ SIFIRLANDI)
+   ========================================================== */
+async function fetchUSGS(range = 'day') {
+    // Loader'ı göster
+    const loader = document.getElementById('loader');
+    loader.style.display = 'flex';
+    loader.style.opacity = '1';
+
     try {
-        const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+        const url = `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_${range}.geojson`;
+        const response = await fetch(url);
         const data = await response.json();
         
         allQuakes = data.features.map(f => ({
             title: f.properties.place,
             mag: f.properties.mag,
-            date: new Date(f.properties.time).toLocaleTimeString('tr-TR'),
+            time: new Date(f.properties.time).toLocaleTimeString('tr-TR'),
             coords: [f.geometry.coordinates[0], f.geometry.coordinates[1]]
         }));
 
-        renderMarkers(allQuakes);
-        updateTime();
-        hideLoader(); // Veri geldiği an loader'ı kapat
+        applyFilters();
+        hideLoader(); // Veri geldiği milisaniyede kapat
 
-    } catch (error) {
-        console.error("USGS Hatası:", error);
-        hideLoader(); // Hata olsa da ekranı aç
+    } catch (e) {
+        console.error("Veri hatası:", e);
+        hideLoader();
     }
 }
 
 /* ==========================================================
-   3. DEPREM NOKTALARI
+   4. FİLTRELEME VE MARKER TASARIMI (PROFESYONEL)
    ========================================================== */
-function renderMarkers(quakes) {
-    markers.forEach(m => m.remove());
-    markers = [];
-
-    quakes.forEach(quake => {
-        let color = '#2ecc71'; // Küçük depremler yeşil
-        if (quake.mag >= 6.0) color = '#e74c3c'; // Büyükler kırmızı
-        else if (quake.mag >= 4.0) color = '#f1c40f'; // Orta turuncu
-
-        const marker = new mapboxgl.Marker({ color: color })
-            .setLngLat(quake.coords)
-            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
-                <div style="color:#000; font-family:Inter, sans-serif; padding:5px;">
-                    <strong style="display:block; margin-bottom:4px;">${quake.title}</strong>
-                    Büyüklük: ${quake.mag} Mw<br>
-                    Zaman: ${quake.date}
-                </div>
-            `))
-            .addTo(map);
-        markers.push(marker);
-    });
-}
-
-function updateTime() {
-    const now = new Date();
-    const t = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    const el = document.getElementById('last-update');
-    if (el) el.innerText = "Son Güncelleme: " + t;
-}
-
-// Filtreler ve Lejant
-function filterMag(minMag) {
-    const filtered = allQuakes.filter(q => q.mag >= minMag);
+function applyFilters() {
+    const filtered = allQuakes.filter(q => q.mag >= currentMinMag);
     renderMarkers(filtered);
 }
 
-function toggleLegend() {
-    const p = document.getElementById('legend-panel');
-    if(p) p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+function filterMag(min) {
+    currentMinMag = min;
+    applyFilters();
+    
+    // Buton aktifliğini görselleştir
+    document.querySelectorAll('.mag-btn').forEach(btn => {
+        btn.classList.remove('btn-active');
+        if(parseFloat(btn.innerText) === min || (min === 0 && btn.innerText === 'Hepsi')) {
+            btn.classList.add('btn-active');
+        }
+    });
 }
 
-/* ==========================================================
-   4. BAŞLATICI
-   ========================================================== */
-map.on('style.load', () => {
-    map.setFog({}); // Küre atmosfer derinliği
-    fetchUSGS();
-});
+function changeTimeRange(range) {
+    fetchUSGS(range);
+    
+    // Zaman butonu aktifliğini görselleştir
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('btn-active');
+        const rangeText = range === 'hour' ? '1 Saat' : (range === 'day' ? '24 Saat' : '7 Gün');
+        if(btn.innerText === rangeText) btn.classList.add('btn-active');
+    });
+}
 
-// Sigorta: 3 saniye sonra ekranı her türlü aç
-setTimeout(hideLoader, 3000);
+function renderMarkers(quakes) {
+    currentMarkers.forEach(m => m.remove());
+    currentMarkers = [];
+
+    quakes.forEach(q => {
+        let color = '#2ecc71';
+        if (q.mag >= 7.0) color = '#8e44ad';
+        else if (q.mag >= 5.5) color = '#e74c3c';
+        else if (q.mag >= 4.0) color = '#f1c40f';
+
+        // MARKET İKONU YERİNE PROFESYONEL HALKA
+        const el = document.createElement('div');
+        el.className = 'sismic-halka';
+        el.style.width = `${Math.max(q.mag * 4, 10)}px`;
+        el.style.height = `${Math.max(q.mag * 4, 10)}px`;
+        el.style.backgroundColor = color;
+        el.style.boxShadow = `0 0 15px ${color}`;
+
+        const marker = new mapboxgl.Marker(el)
+            .setLngLat(q.coords)
+            .setPopup(new mapboxgl.Popup({ offset: 15, closeButton: false }).setHTML(`
+                <div class="pro-popup">
+                    <div class="mag-badge" style="background:${color}">${q.mag}</div>
+                    <div class="info">
+                        <strong>${q.title}</strong>
+                        <p>${q.time}</p>
+                    </div>
+                </div>
+            `))
+            .addTo(map);
+        currentMarkers.push(marker);
+    });
+}
+
+function hideLoader() {
+    const l = document.getElementById('loader');
+    l.style.opacity = '0';
+    setTimeout(() => l.style.display = 'none', 300);
+    document.getElementById('last-update').innerText = "Son Güncelleme: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+map.on('style.load', () => {
+    map.setFog({ "range": [0.5, 10], "color": "#000000", "high-color": "#242B4B", "space-color": "#000000" });
+    fetchUSGS('day');
+    rotateGlobe();
+});
