@@ -8,7 +8,6 @@ const map = new mapboxgl.Map({
     projection: 'globe'
 });
 
-// Kontrolleri hemen ekleyelim
 map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
 let spinEnabled = true;
@@ -37,15 +36,10 @@ async function updateQuakes() {
                 type: 'circle',
                 source: 'usgs',
                 paint: {
-                   'circle-radius': [
-    'interpolate', ['linear'], ['get', 'mag'],
-    1, 2,    // M 1.0 -> 2px
-    3, 4,    // M 3.0 -> 4px
-    5, 8,    // M 5.0 -> 8px
-    7, 16,   // M 7.0 -> 16px
-    9, 35    // M 9.0 -> 35px (Gerçekten büyük deprem fark edilsin)
-],
-
+                    'circle-radius': [
+                        'interpolate', ['linear'], ['get', 'mag'],
+                        1, 2, 3, 4, 5, 8, 7, 16, 9, 35
+                    ],
                     'circle-color': [
                         'step', ['get', 'mag'],
                         '#2ecc71', 3.0,
@@ -61,17 +55,17 @@ async function updateQuakes() {
                 }
             });
         }
-    } catch (e) { console.error("Hata:", e); }
+    } catch (e) { console.error("Veri çekme hatası:", e); }
 }
-
-// --- POP-UP VE TIKLAMA (Geliştirilmiş Hassasiyet) ---
+// --- POP-UP VE TIKLAMA (Düzeltilmiş Kısım) ---
 map.on('click', 'usgs-viz', (e) => {
-    const props = e.features[0].properties;
-    const coords = e.features[0].geometry.coordinates;
+    const feature = e.features[0]; // Eksik olan tanım eklendi
+    const props = feature.properties;
+    const coords = feature.geometry.coordinates;
     const date = new Date(props.time).toLocaleString('tr-TR');
     
-    // USGS verisinde derinlik 3. koordinattır (index 2)
-    const depth = feature.geometry.coordinates[2] !== undefined ? feature.geometry.coordinates[2] : 0;
+    // Derinlik USGS verisinde 3. koordinattır (index 2)
+    const depth = coords[2] !== undefined ? coords[2] : 0;
 
     new mapboxgl.Popup({ offset: 15, closeButton: true })
         .setLngLat([coords[0], coords[1]])
@@ -100,7 +94,6 @@ map.on('click', 'usgs-viz', (e) => {
         .addTo(map);
 });
 
-
 map.on('mousemove', 'usgs-viz', () => { map.getCanvas().style.cursor = 'pointer'; });
 map.on('mouseleave', 'usgs-viz', () => { map.getCanvas().style.cursor = ''; });
 
@@ -116,8 +109,10 @@ function rotateGlobe() {
 map.on('moveend', () => { if (!userInteracting && spinEnabled) rotateGlobe(); });
 map.on('mousedown', () => { userInteracting = true; });
 map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
-map.on('wheel', () => { userInteracting = true; setTimeout(() => { userInteracting = false; }, 2000); });
-map.on('touchstart', () => { userInteracting = true; });
+map.on('wheel', () => { 
+    userInteracting = true; 
+    setTimeout(() => { userInteracting = false; }, 2000); 
+});
 
 map.on('load', () => {
     updateQuakes();
@@ -125,14 +120,11 @@ map.on('load', () => {
     setInterval(updateQuakes, 60000);
 });
 
-// --- FİLTRELEME VE BUTON GÖRSELLİĞİ ---
+// --- FİLTRELEME ---
 window.filterMag = function(minMag, btnElement) {
     if (map.getLayer('usgs-viz')) {
         map.setFilter('usgs-viz', ['>=', ['get', 'mag'], minMag]);
-        
-        // Tüm filtre butonlarından 'active' sınıfını kaldır
         document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('btn-active'));
-        // Tıklanan butona 'active' sınıfı ekle
         btnElement.classList.add('btn-active');
     }
 };
