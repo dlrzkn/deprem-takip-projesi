@@ -1,14 +1,3 @@
-// Mapbox Token
-mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
-
-const map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/dark-v11',
-    center: [35, 39], zoom: 2.2, projection: 'globe'
-});
-
-let allData = [], markers = [], isRotating = true, currentMag = 0, currentRange = 'day';
-
 async function fetchData() {
     const loader = document.getElementById('loader');
     if(loader) loader.style.display = 'flex';
@@ -43,7 +32,7 @@ async function fetchData() {
                         geometry: { type: 'Point', coordinates: [parseFloat(coords[0]), parseFloat(coords[1])] },
                         properties: {
                             mag: parseFloat(props.mag || props.magnitude || 0),
-                            // Bölge ismi hatasını burada çözüyoruz:
+                            // EMSC 'region' anahtarını yakalayarak hatayı çözen kısım:
                             place: props.place || props.region || props.flynn_region || "Bilinmeyen Bölge",
                             time: new Date(props.time || props.m_time).getTime(),
                             url: customUrl || "#"
@@ -57,20 +46,12 @@ async function fetchData() {
         allData = smartDeduplicate(mergedFeatures);
         render();
         
-        // Üst bar istatistik güncelleme
         const stats = allData.reduce((acc, curr) => { acc[curr.sourceId] = (acc[curr.sourceId] || 0) + 1; return acc; }, {});
         const updateEl = document.getElementById('last-update');
         if(updateEl) updateEl.innerText = `E:${stats.EMSC || 0} U:${stats.USGS || 0} G:${stats.GFZ || 0} | ${new Date().toLocaleTimeString('tr-TR')}`;
     } catch (e) { console.error("Veri hatası:", e); }
     finally { if(loader) loader.style.display = 'none'; }
 }
-
-
-
-
-
-
-
 
 
 
@@ -103,24 +84,21 @@ function render() {
         const size = Math.max(mag * 4 + 8, 12);
         el.style.cssText = `background:${color}; width:${size}px; height:${size}px; border:2px solid #fff;`;
 
-        const popupHTML = `
-            <div style="font-family:sans-serif; min-width:160px; color:#000; padding:5px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                    <span class="source-tag tag-${f.sourceId.toLowerCase()}">${f.sourceId}</span>
-                    <b style="color:${color}">${mag.toFixed(1)} Mw</b>
-                </div>
-                <strong style="display:block; font-size:12px; margin-bottom:5px;">${place}</strong>
-                <small style="color:#666;">${new Date(time).toLocaleString('tr-TR')}</small>
-                <a href="${url}" target="_blank" style="display:block; margin-top:8px; text-align:center; background:#333; color:#fff; text-decoration:none; padding:5px; border-radius:4px; font-size:10px;">DETAYLAR ↗</a>
-            </div>
-        `;
-
         const marker = new mapboxgl.Marker(el)
             .setLngLat(f.geometry.coordinates)
-            .setPopup(new mapboxgl.Popup({ offset: 20 }).setHTML(popupHTML))
+            .setPopup(new mapboxgl.Popup({ offset: 20 }).setHTML(`
+                <div style="font-family:sans-serif; min-width:160px; color:#000; padding:5px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span class="source-tag tag-${f.sourceId.toLowerCase()}">${f.sourceId}</span>
+                        <b style="color:${color}">${mag.toFixed(1)} Mw</b>
+                    </div>
+                    <strong style="display:block; font-size:12px; margin-bottom:5px;">${place}</strong>
+                    <small style="color:#666;">${new Date(time).toLocaleString('tr-TR')}</small>
+                    <a href="${url}" target="_blank" style="display:block; margin-top:8px; text-align:center; background:#333; color:#fff; text-decoration:none; padding:5px; border-radius:4px; font-size:10px;">DETAYLAR ↗</a>
+                </div>
+            `))
             .addTo(map);
-        
-        f.marker = marker; // Popup'ı listeden açabilmek için
+        f.marker = marker;
         return marker;
     });
     updateList(filteredData);
@@ -128,26 +106,39 @@ function render() {
 
 
 
+let isUserInteracting = false;
 
+map.on('mousedown', () => { isUserInteracting = true; });
+map.on('touchstart', () => { isUserInteracting = true; });
+map.on('mouseup', () => { isUserInteracting = false; if(isRotating) rotate(); });
+map.on('touchend', () => { isUserInteracting = false; if(isRotating) rotate(); });
 
+function rotate() {
+    if (!isRotating || map.getZoom() > 5 || isUserInteracting) return;
+    const center = map.getCenter();
+    center.lng -= 1.2;
+    map.easeTo({ center, duration: 1000, easing: n => n });
+}
 
+map.on('moveend', () => { if (isRotating && !isUserInteracting) rotate(); });
 
+function toggleRotation() {
+    isRotating = !isRotating;
+    document.getElementById('rotation-btn').innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür';
+    if (isRotating) { isUserInteracting = false; rotate(); }
+}
 
 function updateList(data) {
     const listContainer = document.getElementById('earthquake-list');
     const countEl = document.getElementById('list-count');
     if (!listContainer) return;
-
     listContainer.innerHTML = '';
     const sortedData = [...data].sort((a, b) => b.properties.time - a.properties.time);
-    
-    // Sayaç hatasını burada çözüyoruz:
     if (countEl) countEl.innerText = `${sortedData.length} Deprem`;
 
     sortedData.slice(0, 30).forEach(f => {
         const { mag, place, time } = f.properties;
         const color = mag >= 7 ? '#c0392b' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
-        
         const item = document.createElement('div');
         item.className = 'list-item';
         item.innerHTML = `
@@ -155,10 +146,9 @@ function updateList(data) {
                 <span class="list-mag" style="color:${color}">${mag.toFixed(1)}</span>
                 <span class="source-tag tag-${f.sourceId.toLowerCase()}" style="font-size:8px;">${f.sourceId}</span>
             </div>
-            <span class="list-place">${place}</span>
+            <span class="list-place" title="${place}">${place}</span>
             <small style="font-size:9px; color:#888;">${new Date(time).toLocaleTimeString('tr-TR')}</small>
         `;
-        
         item.onclick = () => {
             map.flyTo({ center: f.geometry.coordinates, zoom: 8, duration: 1500 });
             if(f.marker) f.marker.togglePopup();
@@ -167,13 +157,11 @@ function updateList(data) {
     });
 }
 
-function rotate() { if (!isRotating || map.getZoom() > 5) return; const center = map.getCenter(); center.lng -= 1.2; map.easeTo({ center, duration: 1000, easing: n => n }); }
-map.on('moveend', () => { if(isRotating) rotate(); });
-function toggleRotation() { isRotating = !isRotating; document.getElementById('rotation-btn').innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür'; if(isRotating) rotate(); }
+// Diğer yardımcılar
 function changeTime(r) { currentRange = r; updateBtn('.time-btn', event.target); fetchData(); }
 function changeMag(m) { currentMag = m; updateBtn('.mag-btn', event.target); render(); }
 function updateBtn(cls, target) { document.querySelectorAll(cls).forEach(b => b.classList.remove('btn-active')); if(target) target.classList.add('btn-active'); }
 function toggleTheme() { const isDark = map.getStyle().name.includes('Dark'); map.setStyle('mapbox://styles/mapbox/' + (isDark ? 'streets-v12' : 'dark-v11')); }
 
 map.on('style.load', () => { map.setFog({}); rotate(); fetchData(); });
-setInterval(fetchData, 120000); // 2 dakikada bir güncelle
+setInterval(fetchData, 120000);
