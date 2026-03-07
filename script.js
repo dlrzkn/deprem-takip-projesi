@@ -47,7 +47,14 @@ function renderMarkers() {
         .map(f => {
             const mag = f.properties.mag;
             const url = f.properties.url; // USGS Detay Linki
-            const color = mag >= 7.0 ? '#8e44ad' : mag >= 5.5 ? '#e74c3c' : mag >= 3.0 ? '#f1c40f' : '#2ecc71';
+            
+           // Renk atamasını USGS bilimsel skalasına göre güncelle
+const color = mag >= 8.0 ? '#8e44ad' : 
+              mag >= 7.0 ? '#c0392b' : 
+              mag >= 6.0 ? '#e74c3c' : 
+              mag >= 5.0 ? '#e67e22' : 
+              mag >= 3.0 ? '#f1c40f' : '#2ecc71';
+
             
             const el = document.createElement('div');
             el.className = 'sismic-marker';
