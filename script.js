@@ -12,6 +12,13 @@ map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
 let spinEnabled = true;
 let userInteracting = false;
+let currentRange = 'day'; // Varsayılan zaman aralığı
+
+const timeURLs = {
+    'hour': 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson',
+    'day': 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson',
+    'week': 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson'
+};
 
 map.on('style.load', () => {
     map.setFog({
@@ -23,14 +30,13 @@ map.on('style.load', () => {
 
 async function updateQuakes() {
     try {
-        const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
+        const response = await fetch(timeURLs[currentRange]);
         const data = await response.json();
 
         if (map.getSource('usgs')) {
             map.getSource('usgs').setData(data);
         } else {
             map.addSource('usgs', { type: 'geojson', data: data });
-
             map.addLayer({
                 id: 'usgs-viz',
                 type: 'circle',
@@ -42,12 +48,7 @@ async function updateQuakes() {
                     ],
                     'circle-color': [
                         'step', ['get', 'mag'],
-                        '#2ecc71', 3.0,
-                        '#f1c40f', 5.0,
-                        '#e67e22', 6.0,
-                        '#d35400', 7.0,
-                        '#e74c3c', 8.0,
-                        '#8e44ad'
+                        '#2ecc71', 3.0, '#f1c40f', 5.0, '#e67e22', 6.0, '#d35400', 7.0, '#e74c3c', 8.0, '#8e44ad'
                     ],
                     'circle-opacity': 0.8,
                     'circle-stroke-width': 1,
@@ -57,15 +58,14 @@ async function updateQuakes() {
         }
     } catch (e) { console.error("Veri çekme hatası:", e); }
 }
-// --- POP-UP VE TIKLAMA (Düzeltilmiş Kısım) ---
+
+
+// --- POP-UP VE TIKLAMA ---
 map.on('click', 'usgs-viz', (e) => {
-    // BURASI KRİTİK: 'feature' değişkenini burada tanımlıyoruz
     const feature = e.features[0]; 
     const props = feature.properties;
     const coords = feature.geometry.coordinates;
     const date = new Date(props.time).toLocaleString('tr-TR');
-    
-    // Derinlik bilgisini coords[2] üzerinden alıyoruz
     const depth = coords[2] !== undefined ? coords[2] : 0;
 
     new mapboxgl.Popup({ offset: 15, closeButton: true })
@@ -73,63 +73,42 @@ map.on('click', 'usgs-viz', (e) => {
         .setHTML(`
             <div style="font-family: sans-serif; min-width: 200px; padding: 5px; color: #000;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
-                        M ${props.mag.toFixed(1)}
-                    </span>
+                    <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">M ${props.mag.toFixed(1)}</span>
                     <span style="color: #666; font-size: 11px;">${date}</span>
                 </div>
-                <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">
-                    ${props.place}
-                </div>
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">${props.place}</div>
                 <div style="background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #eee;">
                     <div style="display: flex; justify-content: space-between; font-size: 12px;">
                         <span style="color: #7f8c8d;">Derinlik:</span>
                         <span style="font-weight: bold;">${depth.toFixed(1)} km</span>
                     </div>
                 </div>
-                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 11px; margin-top: 10px;">
-                    USGS Detayı →
-                </a>
+                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 11px; margin-top: 10px;">USGS Detayı →</a>
             </div>
-        `)
-        .addTo(map);
-});
-
-    
-    // Derinlik USGS verisinde 3. koordinattır (index 2)
-    const depth = coords[2] !== undefined ? coords[2] : 0;
-
-    new mapboxgl.Popup({ offset: 15, closeButton: true })
-        .setLngLat([coords[0], coords[1]])
-        .setHTML(`
-            <div style="font-family: sans-serif; min-width: 200px; padding: 5px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
-                        M ${props.mag.toFixed(1)}
-                    </span>
-                    <span style="color: #666; font-size: 11px;">${date}</span>
-                </div>
-                <div style="font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 10px;">
-                    ${props.place}
-                </div>
-                <div style="background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #eee;">
-                    <div style="display: flex; justify-content: space-between; font-size: 12px;">
-                        <span style="color: #7f8c8d;">Derinlik:</span>
-                        <span style="font-weight: bold;">${depth.toFixed(1)} km</span>
-                    </div>
-                </div>
-                <a href="${props.url}" target="_blank" style="display: block; text-align: center; background: #34495e; color: white; text-decoration: none; padding: 8px; border-radius: 4px; font-size: 11px; margin-top: 10px;">
-                    USGS Detayı →
-                </a>
-            </div>
-        `)
-        .addTo(map);
+        `).addTo(map);
 });
 
 map.on('mousemove', 'usgs-viz', () => { map.getCanvas().style.cursor = 'pointer'; });
 map.on('mouseleave', 'usgs-viz', () => { map.getCanvas().style.cursor = ''; });
 
-// --- DÖNÜŞ VE ZOOM PERFORMANSI ---
+// --- FONKSİYONLAR ---
+window.changeTimeRange = function(range, btnElement) {
+    currentRange = range;
+    updateQuakes();
+    const parent = btnElement.parentElement;
+    parent.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('btn-active'));
+    btnElement.classList.add('btn-active');
+};
+
+window.filterMag = function(minMag, btnElement) {
+    if (map.getLayer('usgs-viz')) {
+        map.setFilter('usgs-viz', ['>=', ['get', 'mag'], minMag]);
+        const parent = btnElement.parentElement;
+        parent.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('btn-active'));
+        btnElement.classList.add('btn-active');
+    }
+};
+
 function rotateGlobe() {
     if (spinEnabled && !userInteracting && map.getZoom() < 5) {
         const center = map.getCenter();
@@ -138,28 +117,17 @@ function rotateGlobe() {
     }
 }
 
+// --- OLAY İZLEYİCİLER ---
 map.on('moveend', () => { if (!userInteracting && spinEnabled) rotateGlobe(); });
 map.on('mousedown', () => { userInteracting = true; });
 map.on('mouseup', () => { userInteracting = false; rotateGlobe(); });
-map.on('wheel', () => { 
-    userInteracting = true; 
-    setTimeout(() => { userInteracting = false; }, 2000); 
-});
+map.on('wheel', () => { userInteracting = true; setTimeout(() => { userInteracting = false; }, 2000); });
 
 map.on('load', () => {
     updateQuakes();
     rotateGlobe();
     setInterval(updateQuakes, 60000);
 });
-
-// --- FİLTRELEME ---
-window.filterMag = function(minMag, btnElement) {
-    if (map.getLayer('usgs-viz')) {
-        map.setFilter('usgs-viz', ['>=', ['get', 'mag'], minMag]);
-        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('btn-active'));
-        btnElement.classList.add('btn-active');
-    }
-};
 
 const spinBtn = document.getElementById('spin-btn');
 if (spinBtn) {
@@ -170,3 +138,4 @@ if (spinBtn) {
         if (spinEnabled) rotateGlobe();
     };
 }
+
