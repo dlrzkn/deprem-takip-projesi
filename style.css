@@ -1,209 +1,149 @@
-/* Sismik İzleme Platformu - Profesyonel CSS (Bölüm 1) */
-
-:root {
-    --bg-glass: rgba(10, 10, 12, 0.85);
-    --border-glass: rgba(255, 255, 255, 0.08);
-    --accent-orange: #ff9900;
-    --text-main: #f0f2f5;
-    --text-dim: #9ca3af;
-}
-
+/* Temel Ayarlar */
 * { 
     margin: 0; 
     padding: 0; 
     box-sizing: border-box; 
-    font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+    font-family: 'Inter', sans-serif; 
 }
 
 html, body { 
     height: 100%; 
     width: 100%; 
     overflow: hidden; 
-    background: #050505; 
+    background: #000; 
 }
 
-/* Harita Katmanı - En Alt */
+/* Harita Katmanı (En Altta) */
 #map { 
     position: absolute; 
     inset: 0; 
     z-index: 1; 
 }
 
-/* Global Cam Efekti */
+/* Cam Efekti Panelleri */
 .glass-effect { 
-    position: absolute;
-    z-index: 10;
-    background: var(--bg-glass);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid var(--border-glass);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-    color: var(--text-main);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute; 
+    z-index: 10; 
+    background: rgba(15, 15, 15, 0.85); 
+    backdrop-filter: blur(20px); 
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    color: #fff; 
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 
-/* Sismik İzleme Platformu - Profesyonel CSS (Bölüm 2) */
-
-/* Üst Durum Çubuğu */
+/* Üst Bar */
 .top-bar {
-    top: 24px;
-    left: 50%;
+    top: 20px; 
+    left: 50%; 
     transform: translateX(-50%);
-    padding: 10px 28px;
-    border-radius: 50px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+    padding: 10px 25px; 
+    border-radius: 30px;
+    white-space: nowrap;
 }
 
-/* Dinamik Liste Paneli */
+/* Sol Panel (Dar ve Şık) */
 #earthquake-list-container {
-    top: 90px;
-    left: 24px;
-    width: 320px;
-    max-height: calc(100vh - 280px);
-    display: flex;
+    top: 80px; 
+    left: 20px; 
+    width: 260px;
+    max-height: calc(100vh - 280px); 
+    display: flex; 
     flex-direction: column;
-    border-radius: 20px;
+    border-radius: 18px;
     overflow: hidden;
 }
 
-.list-header {
-    padding: 16px 20px;
-    background: rgba(255, 153, 0, 0.1);
-    border-bottom: 1px solid var(--border-glass);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+#earthquake-list { 
+    overflow-y: auto; 
+    flex-grow: 1; 
+    padding: 5px 10px;
 }
 
-#earthquake-list {
-    overflow-y: auto;
-    padding: 12px;
-    flex: 1;
-}
-
-/* Özelleştirilmiş Kaydırma Çubuğu */
-.style-scroll::-webkit-scrollbar { width: 4px; }
-.style-scroll::-webkit-scrollbar-track { background: transparent; }
-.style-scroll::-webkit-scrollbar-thumb { 
-    background: rgba(255, 255, 255, 0.1); 
-    border-radius: 10px; 
-}
-
-
-/* Sismik İzleme Platformu - Profesyonel CSS (Bölüm 3) */
-
-/* Magnitüd Renkleri ve Glow Efektleri */
-.mag-low { color: #00e676; }           /* < 3.0: Mikro */
-.mag-mid { color: #ffea00; }           /* 3.0 - 4.9: Küçük/Hafif */
-.mag-moderate { color: #ff9100; }      /* 5.0 - 5.9: Orta */
-.mag-high {                            /* 6.0+: Güçlü ve Üzeri */
-    color: #ff1744; 
-    text-shadow: 0 0 15px rgba(255, 23, 68, 0.6);
-    font-weight: 900;
-}
-
-/* Nabız Veren Canlı Gösterge */
-.dot {
-    width: 10px;
-    height: 10px;
-    background: #ff1744;
-    border-radius: 50%;
-    animation: pulseScientist 2s infinite ease-in-out;
-}
-
-@keyframes pulseScientist {
-    0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 23, 68, 0.7); }
-    70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 23, 68, 0); }
-    100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 23, 68, 0); }
-}
-
-/* Veri Kaynağı Etiketleri */
-.source-tag {
-    font-size: 8px;
-    padding: 2px 5px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    font-weight: 900;
-    margin-left: 10px;
-}
-.tag-emsc { background: #0091ea; }
-.tag-usgs { background: #00c853; }
-.tag-geofon { background: #ff6d00; }
-
-
-/* Sismik İzleme Platformu - Profesyonel CSS (Bölüm 4) */
-
+/* Alt Panel (Filtreler) */
 .bottom-panel {
-    bottom: 30px;
-    left: 50%;
+    bottom: 30px; 
+    left: 50%; 
     transform: translateX(-50%);
-    padding: 16px 32px;
-    border-radius: 30px;
-    display: flex;
-    gap: 40px;
-    min-width: 500px;
+    display: flex; 
+    gap: 30px; 
+    padding: 15px 30px; 
+    border-radius: 25px;
 }
 
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+
+/* Sismik Markerlar (Harita Üzerindeki Noktalar) */
+.sismic-marker {
+    border-radius: 50%; 
+    border: 2px solid #fff; 
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5); 
+    transition: transform 0.2s;
 }
 
-.label {
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--accent-orange);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
+.sismic-marker:hover { transform: scale(1.4); z-index: 100; }
 
-.btn-row { display: flex; gap: 8px; }
+/* Magnitüd Renk Skalası (Profesyonel) */
+.mag-low { background: #00e676 !important; }      /* < 3.0 */
+.mag-mid { background: #ffea00 !important; }      /* 3.0 - 4.9 */
+.mag-moderate { background: #ff9100 !important; } /* 5.0 - 5.9 */
+.mag-high { background: #ff1744 !important; }     /* 6.0 - 6.9 */
+.mag-mega { background: #d500f9 !important; }     /* > 7.0 */
+
+/* Buton ve Etiketler */
+.label { font-size: 10px; font-weight: 900; color: #ff9900; margin-bottom: 5px; display: block; }
+.btn-row { display: flex; gap: 6px; }
 
 button {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-dim);
-    padding: 8px 16px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
+    background: rgba(255,255,255,0.05); 
+    color: #eee; 
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 6px 12px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-size: 11px; 
+    transition: 0.2s;
 }
 
-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+button.btn-active { 
+    background: #ff9900 !important; 
+    color: #000 !important; 
+    font-weight: bold; 
+    border-color: #ff9900;
 }
 
-button.btn-active {
-    background: var(--accent-orange);
-    border-color: var(--accent-orange);
-    color: #000;
-    font-weight: 800;
-    box-shadow: 0 4px 15px rgba(255, 153, 0, 0.3);
+/* Lejant (Ampul Menüsü) */
+#legend {
+    bottom: 120px; 
+    right: 20px; 
+    width: 190px; 
+    padding: 15px; 
+    display: none; /* Başlangıçta gizli */
+    border-radius: 15px;
 }
+.l-item { display: flex; align-items: center; gap: 10px; font-size: 11px; margin-top: 8px; }
+.l-item span { width: 10px; height: 10px; border-radius: 50%; }
 
-/* Marker Stili (Harita Üzerindeki Noktalar) */
-.sismic-marker {
-    border-radius: 50%;
-    border: 2px solid #fff;
-    cursor: pointer;
-    box-shadow: 0 0 20px rgba(0,0,0,0.8);
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
 
-.sismic-marker:hover {
-    transform: scale(1.5) !important;
-    z-index: 999;
+/* Kaydırma Çubuğu */
+.style-scroll::-webkit-scrollbar { width: 4px; }
+.style-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+/* Loader */
+.loader-overlay {
+    position: fixed; inset: 0; background: #000; z-index: 2000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
+.spinner {
+    width: 40px; height: 40px; border: 4px solid #333;
+    border-top-color: #ff9900; border-radius: 50%; animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 
 
 
