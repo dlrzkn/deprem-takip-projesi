@@ -1,10 +1,10 @@
-/* 1. SON AKTİVİTE LİSTESİ (Filtrenin Üstünde) */
+/* 1. SON AKTİVİTE LİSTESİ (Alt Panelin Üstünde) */
 #earthquake-list-container {
     position: absolute;
-    bottom: 220px; /* Filtre panelinin (20px + 180px yükseklik) hemen üzerinde */
+    bottom: 220px; 
     left: 20px;
-    width: 260px;  /* Tam simetri için filtreyle aynı genişlik */
-    height: 35vh;  
+    width: 260px;  
+    height: 38vh;  
     z-index: 100;
     border-radius: 15px;
     display: flex;
@@ -16,16 +16,16 @@
 }
 
 .list-header { padding: 10px; background: rgba(255, 153, 0, 0.15); font-size: 11px; font-weight: 800; color: #fff; }
-.list-item { padding: 8px; font-size: 10px; background: rgba(255, 255, 255, 0.03); margin: 5px; border-radius: 6px; }
+#earthquake-list { overflow-y: auto; flex: 1; padding: 5px; }
+.list-item { padding: 8px; font-size: 10px; background: rgba(255, 255, 255, 0.03); margin-bottom: 5px; border-radius: 6px; cursor: pointer; }
 .list-mag { font-size: 13px; font-weight: 900; }
 
-/* 2. FİLTRE PANELİ (En Alt Sol Köşe) */
+/* 2. FİLTRE PANELİ (Sol Alt Köşe) */
 .bottom-panel {
     position: absolute;
     bottom: 20px; 
     left: 20px;   
     width: 260px; 
-    transform: none; 
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -39,14 +39,15 @@
 
 .btn-row { display: flex; gap: 4px; }
 button { flex: 1; padding: 6px 2px; font-size: 9px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; }
+.btn-active { background: #ff9900 !important; color: #000 !important; font-weight: bold; }
 .label { font-size: 8px; color: #ff9900; font-weight: 800; text-transform: uppercase; }
 
-/* 3. BÜYÜKLÜK ÖLÇEĞİ (Legend - Ampul Paneli) */
+/* 3. BÜYÜKLÜK ÖLÇEĞİ (Legend) - Listenin Önünde Açılır */
 .legend-box {
     position: absolute;
-    bottom: 220px; /* Listenin olduğu yerde açılır */
+    bottom: 220px; 
     left: 20px;    
-    z-index: 110;
+    z-index: 110; /* Listenin üzerinde görünmesi için z-index yüksek */
     width: 260px;  
     padding: 15px;
     border-radius: 15px;
@@ -58,14 +59,13 @@ button { flex: 1; padding: 6px 2px; font-size: 9px; border-radius: 6px; backgrou
 }
 
 .l-item { display: flex; align-items: center; gap: 8px; font-size: 10px; margin-bottom: 6px; }
-.l-item span { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.l-item b { color: #ff9900; margin-right: 4px; }
+.l-item span { width: 10px; height: 10px; border-radius: 50%; }
 
-/* 4. AMPUL BUTONU (Filtrenin Hemen Yanında) */
+/* 4. AMPUL BUTONU (Filtrenin Yanında) */
 .br { 
     position: absolute;
     bottom: 20px; 
-    left: 290px; /* Panel genişliği + boşluk */
+    left: 290px; 
     width: 45px; 
     height: 45px; 
     display: flex; 
@@ -77,5 +77,4 @@ button { flex: 1; padding: 6px 2px; font-size: 9px; border-radius: 6px; backgrou
     background: rgba(15, 15, 15, 0.75);
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
 }
