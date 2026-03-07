@@ -1,227 +1,25 @@
-/* --- GLOBAL AYARLAR --- */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
-    -webkit-tap-highlight-color: transparent;
-}
-
-body {
-    background: #000;
-    overflow: hidden;
-}
-
-#map {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100vh;
-}
-
-/* --- CAM EFEKTİ (GLASSMORPHISM) --- */
-.glass-effect {
-    background: rgba(15, 15, 15, 0.75);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    color: white;
-}
-
-/* --- ÜST BİLGİ BARI --- */
-.top-bar {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 10px 20px;
-    border-radius: 40px;
-    white-space: nowrap;
-}
-
-.live-indicator {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 700;
+/* Popup içindeki link stili */
+.usgs-link {
+    display: inline-block;
+    margin-top: 8px;
+    color: #ff9900;
+    text-decoration: none;
     font-size: 11px;
-    letter-spacing: 1px;
-    color: #ff4444;
+    font-weight: bold;
+    border-bottom: 1px solid transparent;
 }
+.usgs-link:hover { border-bottom: 1px solid #ff9900; }
 
-.dot {
-    width: 8px;
-    height: 8px;
-    background: #ff4444;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #ff4444;
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(0.95); opacity: 0.5; }
-    50% { transform: scale(1.1); opacity: 1; }
-    100% { transform: scale(0.95); opacity: 0.5; }
-}
-
-#last-update {
-    font-size: 12px;
-    font-weight: 500;
-    color: #eee;
-}
-
-/* --- SOL ÜST KONTROLLER --- */
-.side-controls {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.action-btn {
-    padding: 12px;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: 0.3s;
-    border: 1px solid rgba(255,255,255,0.15);
-}
-
-.action-btn:active { transform: scale(0.95); }
-
-/* --- ALT FİLTRE PANELİ --- */
+/* Alt panelin ekranı kaplamaması için genişlik ayarı */
 .bottom-panel {
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
-    display: flex;
-    align-items: flex-end;
-    gap: 20px;
-    padding: 15px 25px;
-    border-radius: 24px;
-    width: auto;
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    z-index: 100; display: flex; flex-direction: column; gap: 15px;
+    padding: 15px 25px; border-radius: 20px; width: auto; min-width: 300px;
 }
 
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+/* Üst barın tablet uyumu */
+.top-bar {
+    position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+    z-index: 100; width: auto; min-width: 250px; justify-content: space-between;
 }
 
-.label {
-    font-size: 10px;
-    font-weight: 800;
-    color: #ff9900;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.btn-row {
-    display: flex;
-    gap: 6px;
-}
-
-button {
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 8px 14px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-active {
-    background: #ff9900 !important;
-    color: #000 !important;
-    border-color: #ff9900 !important;
-    box-shadow: 0 0 20px rgba(255, 153, 0, 0.4);
-}
-
-/* --- PROFESYONEL MARKER VE POPUP --- */
-.sismic-marker {
-    border-radius: 50%;
-    border: 2px solid white;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-    z-index: 1;
-}
-
-.sismic-marker:hover {
-    transform: scale(1.5);
-    z-index: 10;
-}
-
-.mapboxgl-popup-content {
-    background: rgba(10, 10, 10, 0.95) !important;
-    color: white !important;
-    border-radius: 16px !important;
-    padding: 15px !important;
-    border: 1px solid #333 !important;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important;
-}
-
-.mapboxgl-popup-tip { border-top-color: rgba(10, 10, 10, 0.95) !important; }
-
-/* --- LOADER (PROFESYONEL) --- */
-.loader-overlay {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    z-index: 2000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.5s ease;
-}
-
-.loader-content {
-    text-align: center;
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid rgba(255, 153, 0, 0.1);
-    border-top: 5px solid #ff9900;
-    border-radius: 50%;
-    animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-    margin: 0 auto 20px;
-}
-
-.loader-content p {
-    color: #ff9900;
-    font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* --- RESPONSIVE TASARIM --- */
-@media (max-width: 800px) {
-    .bottom-panel {
-        flex-direction: column-reverse;
-        align-items: center;
-        width: 90vw;
-        bottom: 20px;
-    }
-    .top-bar { width: 90vw; justify-content: space-between; top: 10px; }
-    .side-controls { top: 70px; left: 10px; }
-}
