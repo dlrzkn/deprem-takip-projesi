@@ -43,11 +43,26 @@
         <div style="font-size: 10px; opacity: 0.6;">Kaynak: USGS / NEIC</div>
     </div>
     
-<div class="time-filters" style="margin-top: 10px; display: flex; gap: 5px;">
-    <button class="filter-btn" onclick="changeTimeRange('hour', this)">Son 1 Saat</button>
-    <button class="filter-btn btn-active" onclick="changeTimeRange('day', this)">Son 1 Gün</button>
-    <button class="filter-btn" onclick="changeTimeRange('week', this)">Son 1 Hafta</button>
+<div class="bottom-controls">
+    <div class="filter-group">
+        <div class="filter-label">Zaman Aralığı</div>
+        <div class="btn-row">
+            <button class="filter-btn" onclick="changeTimeRange('hour', this)">1 Saat</button>
+            <button class="filter-btn btn-active" onclick="changeTimeRange('day', this)">1 Gün</button>
+            <button class="filter-btn" onclick="changeTimeRange('week', this)">1 Hafta</button>
+        </div>
+    </div>
+
+    <div class="filter-group">
+        <div class="filter-label">Minimum Büyüklük</div>
+        <div class="btn-row">
+            <button class="filter-btn btn-active" onclick="filterMag(0, this)">Hepsi</button>
+            <button class="filter-btn" onclick="filterMag(4.5, this)">4.5+</button>
+            <button class="filter-btn" onclick="filterMag(6.0, this)">6.0+</button>
+        </div>
+    </div>
 </div>
+
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
     
