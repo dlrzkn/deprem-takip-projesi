@@ -1,64 +1,35 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sismik İzleme Platformu | Canlı</title>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<div class="top-bar glass-effect">
+    <div class="live-indicator"><span class="dot"></span> CANLI</div>
+    <div id="last-update">--:--:--</div>
+    <button id="theme-toggle" onclick="toggleTheme()">🌓</button>
+</div>
 
-    <div id="map"></div>
+<button id="rotation-btn" class="glass-effect action-btn" onclick="toggleRotation()">🌎 Durdur</button>
 
-    <div class="top-bar glass-effect">
-        <div class="live-indicator"><span class="dot"></span> CANLI</div>
-        <div id="last-update">Yükleniyor...</div>
-        <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
-    </div>
-
-    <div class="side-controls">
-        <button id="rotation-btn" class="glass-effect action-btn" onclick="toggleRotation()">🌎 Durdur</button>
-    </div>
-
-    <div class="bottom-panel glass-effect">
-        <div class="filter-group">
-            <span class="label">Zaman</span>
-            <div class="btn-row">
-                <button class="time-btn btn-active" onclick="changeTime('hour')">1S</button>
-                <button class="time-btn" onclick="changeTime('day')">24S</button>
-                <button class="time-btn" onclick="changeTime('week')">7G</button>
-            </div>
-        </div>
-        <div class="filter-group">
-            <span class="label">Büyüklük</span>
-            <div class="btn-row">
-                <button class="mag-btn btn-active" onclick="changeMag(0)">Hepsi</button>
-                <button class="mag-btn" onclick="changeMag(4.5)">4.5+</button>
-                <button class="mag-btn" onclick="changeMag(6.0)">6.0+</button>
-            </div>
-        </div>
-        <button id="legend-btn" onclick="toggleLegend()">ℹ️</button>
-    </div>
-
-    <div id="legend" class="legend-box glass-effect">
-        <h4>Sismik Şiddet</h4>
-        <div class="l-item"><span style="background:#2ecc71"></span> < 3.0</div>
-        <div class="l-item"><span style="background:#f1c40f"></span> 3.0 - 5.5</div>
-        <div class="l-item"><span style="background:#e74c3c"></span> 5.5 - 7.0</div>
-        <div class="l-item"><span style="background:#8e44ad"></span> > 7.0</div>
-    </div>
-
-    <div id="loader" class="loader-overlay">
-        <div class="loader-content">
-            <div class="spinner"></div>
-            <p>Sismik Veriler Yükleniyor...</p>
+<div class="bottom-panel glass-effect">
+    <div class="filter-group">
+        <span class="label">Büyüklük</span>
+        <div class="btn-row">
+            <button class="mag-btn btn-active" onclick="changeMag(0)">Hepsi</button>
+            <button class="mag-btn" onclick="changeMag(4.5)">4.5+</button>
+            <button class="mag-btn" onclick="changeMag(6.0)">6.0+</button>
         </div>
     </div>
+    <div class="filter-group">
+        <span class="label">Zaman</span>
+        <div class="btn-row">
+            <button class="time-btn" onclick="changeTime('hour')">1 Saat</button>
+            <button class="time-btn btn-active" onclick="changeTime('day')">24 Saat</button>
+            <button class="time-btn" onclick="changeTime('week')">7 Gün</button>
+        </div>
+    </div>
+    <button id="legend-btn" class="glass-effect" onclick="toggleLegend()">ℹ️</button>
+</div>
 
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
-    <script src="script.js"></script>
-</body>
-</html>
-
+<div id="legend" class="legend-box glass-effect">
+    <h4>Magnitüd (Mw)</h4>
+    <div class="l-item"><span style="background:#2ecc71"></span> Mikro (&lt; 3.0)</div>
+    <div class="l-item"><span style="background:#f1c40f"></span> Hafif (3.0 - 5.5)</div>
+    <div class="l-item"><span style="background:#e74c3c"></span> Güçlü (5.5 - 7.0)</div>
+    <div class="l-item"><span style="background:#8e44ad"></span> Yıkıcı (&gt; 7.0)</div>
+</div>
