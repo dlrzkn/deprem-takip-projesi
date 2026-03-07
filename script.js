@@ -25,8 +25,15 @@ const EarthquakeApp = {
             this.setupSources();
             this.setupLayers();
             this.setupInteractions();
-            this.setupRotation(); // Dönüşü başlat
+            this.setupRotation(); // Rotasyonu başlat
             this.fetchData();
+        });
+
+        // SONSUZ DÖNGÜ: Her hareket bittiğinde rotasyon açıksa tekrar tetikle
+        this.map.on('moveend', () => {
+            if (this.isRotating && !this.isUserInteracting) {
+                this.setupRotation();
+            }
         });
     },
 
@@ -161,39 +168,28 @@ const EarthquakeApp = {
             });
         });
 
-        // Etkileşim başladığında rotasyonu duraklat
-        const stopInteract = () => { this.isUserInteracting = true; };
-        // Etkileşim bittiğinde rotasyonu devam ettir
-        const startInteract = () => { 
-            this.isUserInteracting = false; 
-            if (this.isRotating) this.setupRotation(); 
-        };
+        const stopInt = () => { this.isUserInteracting = true; };
+        const startInt = () => { this.isUserInteracting = false; this.setupRotation(); };
 
-        this.map.on('mousedown', stopInteract);
-        this.map.on('touchstart', stopInteract);
-        this.map.on('mouseup', startInteract);
-        this.map.on('touchend', startInteract);
+        this.map.on('mousedown', stopInt);
+        this.map.on('touchstart', stopInt);
+        this.map.on('mouseup', startInt);
+        this.map.on('touchend', startInt);
     },
 
-    // YENİLENMİŞ SONSUZ DÖNGÜ MANTIĞI
+    // ROTASYON MANTIĞI: Her seferinde 120 derece döner (daha uzun ve akıcı bir parça)
     setupRotation() {
-        const rotate = () => {
-            if (!this.isRotating || this.map.getZoom() > 5 || this.isUserInteracting) return;
-            
-            const center = this.map.getCenter();
-            center.lng -= 2.0; // Dönüş hızı (Hızlandırmak istersen bu sayıyı artırabilirsin)
-            
-            this.map.easeTo({ 
-                center, 
-                duration: 2000, 
-                easing: n => n, 
-                essential: true 
-            });
-        };
-
-        // Hareket her bittiğinde tekrar çağır (Sonsuz Döngü)
-        this.map.once('moveend', rotate);
-        rotate();
+        if (!this.isRotating || this.map.getZoom() > 5 || this.isUserInteracting) return;
+        
+        const center = this.map.getCenter();
+        center.lng -= 120; // Büyük bir adım atıyoruz
+        
+        this.map.easeTo({
+            center,
+            duration: 20000, // 20 saniye boyunca yavaşça döner
+            easing: n => n, // Sabit hız
+            essential: true
+        });
     },
 
     toggleRotation() {
@@ -203,12 +199,11 @@ const EarthquakeApp = {
             btn.innerHTML = this.isRotating ? '🌎 Durdur' : '🔄 Döndür';
             btn.classList.toggle('btn-active', this.isRotating);
         }
-
         if (!this.isRotating) {
-            this.map.stop(); // Tüm animasyonları durdur
+            this.map.stop();
         } else {
             this.isUserInteracting = false;
-            this.setupRotation(); // Tekrar başlat
+            this.setupRotation();
         }
     },
 
@@ -225,8 +220,7 @@ const EarthquakeApp = {
         if(u) u.innerText = `U: ${stats.USGS || 0}`;
         if(g) g.innerText = `G: ${stats.GFZ || 0}`;
         
-        const updateEl = document.getElementById('last-update');
-        if (updateEl) updateEl.innerText = `Güncelleme: ${new Date().toLocaleTimeString('tr-TR')}`;
+        document.getElementById('last-update').innerText = `Güncelleme: ${new Date().toLocaleTimeString('tr-TR')}`;
         this.renderList();
     },
 
