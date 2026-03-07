@@ -1,107 +1,56 @@
-// Mapbox Token
-mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
-
-const map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/dark-v11',
-    center: [35, 39], 
-    zoom: 2.2, 
-    projection: 'globe'
-});
-
-// Ses Bildirimi (Türkiye'de 4.0+ deprem olduğunda çalar)
-const alertSound = new Audio('https://www.soundjay.com/buttons/beep-07a.mp3');
-
-let allData = [], markers = [], isRotating = true, currentMag = 0, currentRange = 'day', isUserInteracting = false;
-let lastTurkeyEventTime = 0; // Tekrar eden sesleri önlemek için
-
-// 1. BÖLÜM: VERİ ÇEKME
-async function fetchData() {
-    const loader = document.getElementById('loader');
-    if(loader) loader.style.display = 'flex';
-
-    const sources = [
-        { id: 'EMSC', url: 'https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=150', priority: 0 },
-        { id: 'USGS', url: `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_${currentRange}.geojson`, priority: 1 },
-        { id: 'GFZ', url: 'https://geofon.gfz.de/fdsnws/event/1/query?format=json&limit=50', priority: 2 }
-    ];
-
-    try {
-        const results = await Promise.allSettled(sources.map(s => fetch(s.url).then(r => r.json())));
-        let mergedFeatures = [];
-
-        results.forEach((result, index) => {
-            if (result.status === 'fulfilled') {
-                const sInfo = sources[index];
-                const rawData = result.value.features || (Array.isArray(result.value) ? result.value : []);
-                
-                const standardized = rawData.map(f => {
-                    const props = f.properties || f;
-                    const coords = f.geometry ? f.geometry.coordinates : [f.longitude, f.latitude];
-                    return {
-                        sourceId: sInfo.id,
-                        priority: sInfo.priority,
-                        geometry: { type: 'Point', coordinates: [parseFloat(coords[0]), parseFloat(coords[1])] },
-                        properties: {
-                            mag: parseFloat(props.mag || props.magnitude || 0),
-                            place: props.place || props.region || props.flynn_region || "Bilinmeyen Bölge",
-                            time: new Date(props.time || props.m_time).getTime(),
-                            url: props.url || "#"
-                        }
-                    };
-                });
-                mergedFeatures = [...mergedFeatures, ...standardized];
-            }
-        });
-
-        allData = smartDeduplicate(mergedFeatures);
-        render();
-        
-        // İstatistik Güncelleme
-        const stats = allData.reduce((acc, curr) => { acc[curr.sourceId] = (acc[curr.sourceId] || 0) + 1; return acc; }, {});
-        const updateEl = document.getElementById('last-update');
-        if(updateEl) updateEl.innerText = `E:${stats.EMSC || 0} U:${stats.USGS || 0} G:${stats.GFZ || 0} | ${new Date().toLocaleTimeString('tr-TR')}`;
-    } catch (e) { console.error("Veri hatası:", e); }
-    finally { if(loader) loader.style.display = 'none'; }
+// Gerçek Jeofizik Magnitüd Skalası (Mw)
+function getSismicColor(mag) {
+    if (mag >= 8.0) return '#8e44ad'; // Yıkıcı
+    if (mag >= 7.0) return '#c0392b'; // Büyük
+    if (mag >= 6.0) return '#e74c3c'; // Güçlü
+    if (mag >= 5.0) return '#e67e22'; // Orta
+    if (mag >= 3.0) return '#f1c40f'; // Küçük/Hafif
+    return '#2ecc71'; // Mikro
 }
 
-// 2. BÖLÜM: TEMİZLEME VE GÖRSELLEŞTİRME
-function smartDeduplicate(data) {
-    data.sort((a, b) => a.priority - b.priority);
-    const final = [];
-    data.forEach(item => {
-        const isDuplicate = final.some(existing => {
-            const tDiff = Math.abs(item.properties.time - existing.properties.time);
-            const dDiff = Math.sqrt(
-                Math.pow(item.geometry.coordinates[0] - existing.geometry.coordinates[0], 2) +
-                Math.pow(item.geometry.coordinates[1] - existing.geometry.coordinates[1], 2)
-            );
-            return tDiff < 45000 && dDiff < 0.4;
-        });
-        if (!isDuplicate) final.push(item);
-    });
-    return final;
+// Slider Gizleme/Gösterme Fonksiyonu
+function toggleList() {
+    const list = document.getElementById('earthquake-list');
+    const container = document.getElementById('earthquake-list-container');
+    if (list.style.display === "none") {
+        list.style.display = "block";
+        container.style.height = "45vh"; // CSS'teki eski boyuta döner
+    } else {
+        list.style.display = "none";
+        container.style.height = "40px"; // Sadece header görünür
+    }
 }
+
 
 function render() {
     markers.forEach(m => m.remove());
     const filteredData = allData.filter(f => f.properties.mag >= currentMag);
 
     markers = filteredData.map(f => {
-        const { mag, place, time } = f.properties;
-        const color = mag >= 7 ? '#c0392b' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
+        const { mag, place, time, url } = f.properties;
+        const color = getSismicColor(mag);
+        
         const el = document.createElement('div');
         el.className = 'sismic-marker';
-        const size = Math.max(mag * 4 + 8, 12);
-        el.style.cssText = `background:${color}; width:${size}px; height:${size}px; border:2px solid #fff;`;
+        
+        // Dinamik Boyutlandırma: Zoom seviyesi ve magnitüd etkileşimli
+        const baseSize = Math.max(mag * 3.5 + 5, 8);
+        el.style.width = `${baseSize}px`;
+        el.style.height = `${baseSize}px`;
+        el.style.backgroundColor = color;
+        el.style.opacity = "0.8";
 
         return new mapboxgl.Marker(el)
             .setLngLat(f.geometry.coordinates)
-            .setPopup(new mapboxgl.Popup({ offset: 20 }).setHTML(`
-                <div style="color:#000; font-size:11px; padding:5px;">
-                    <b style="color:${color}">${mag.toFixed(1)} Mw</b><br>
-                    <strong>${place}</strong><br>
-                    <small>${new Date(time).toLocaleString('tr-TR')}</small>
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                <div class="pro-popup">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:5px; margin-bottom:8px;">
+                        <span class="source-tag tag-${f.sourceId.toLowerCase()}">${f.sourceId}</span>
+                        <b style="color:${color}; font-size:14px;">${mag.toFixed(1)} Mw</b>
+                    </div>
+                    <strong style="display:block; font-size:12px; margin-bottom:5px;">${place}</strong>
+                    <div style="font-size:10px; color:#666;">${new Date(time).toLocaleString('tr-TR')}</div>
+                    <a href="${url}" target="_blank" style="display:block; margin-top:10px; text-align:center; background:#333; color:#fff; text-decoration:none; padding:6px; border-radius:4px; font-size:10px;">VERİ ANALİZİNE GİT ↗</a>
                 </div>
             `))
             .addTo(map);
@@ -109,82 +58,62 @@ function render() {
     updateList(filteredData);
 }
 
-// 3. BÖLÜM: LİSTELEME VE SESLİ UYARI
-function updateList(data) {
-    const listContainer = document.getElementById('earthquake-list');
-    const countEl = document.getElementById('list-count');
-    if (!listContainer) return;
-    listContainer.innerHTML = '';
-    
-    const sortedData = [...data].sort((a, b) => b.properties.time - a.properties.time);
-    if (countEl) countEl.innerText = `${sortedData.length} Deprem`;
 
-    sortedData.slice(0, 30).forEach((f, index) => {
-        const { mag, place, time } = f.properties;
-        const isTurkey = place.toLowerCase().includes("turkey") || place.toLowerCase().includes("türkiye");
-        const color = mag >= 7 ? '#c0392b' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
 
-        // Sesli Uyarı: Türkiye'de yeni ve 4.0+ bir deprem varsa
-        if (index === 0 && isTurkey && mag >= 4.0 && time > lastTurkeyEventTime) {
-            alertSound.play().catch(() => console.log("Ses izni bekleniyor..."));
-            lastTurkeyEventTime = time;
-        }
 
-        const item = document.createElement('div');
-        item.className = 'list-item';
-        item.innerHTML = `
-            <div class="list-item-top">
-                <b style="color:${color}; font-size:13px;">${mag.toFixed(1)}</b>
-                <small style="font-size:8px; opacity:0.7;">${f.sourceId}</small>
-            </div>
-            <div style="font-size:10px; margin:2px 0;">${place}${isTurkey ? " 🇹🇷" : ""}</div>
-            <small style="font-size:8px; color:#888;">${new Date(time).toLocaleTimeString('tr-TR')}</small>
-        `;
-        item.onclick = () => map.flyTo({ center: f.geometry.coordinates, zoom: 8 });
-        listContainer.appendChild(item);
-    });
+
+
+// Bu kısmı fetchData içindeki allData eşitlemesinden hemen sonraya koyabilirsin
+function updateMapSources() {
+    const geojson = {
+        type: 'FeatureCollection',
+        features: allData.map(f => ({
+            type: 'Feature',
+            geometry: f.geometry,
+            properties: f.properties
+        }))
+    };
+
+    if (map.getSource('earthquakes')) {
+        map.getSource('earthquakes').setData(geojson);
+    } else {
+        map.addSource('earthquakes', {
+            type: 'geojson',
+            data: geojson,
+            cluster: true,
+            clusterMaxZoom: 14,
+            clusterRadius: 50
+        });
+
+        // Cluster Daireleri
+        map.addLayer({
+            id: 'clusters',
+            type: 'circle',
+            source: 'earthquakes',
+            filter: ['has', 'point_count'],
+            paint: {
+                'circle-color': ['step', ['get', 'point_count'], '#51bbd6', 10, '#f1f075', 30, '#f28cb1'],
+                'circle-radius': ['step', ['get', 'point_count'], 15, 10, 20, 30, 25]
+            }
+        });
+
+        // Cluster Sayıları
+        map.addLayer({
+            id: 'cluster-count',
+            type: 'symbol',
+            source: 'earthquakes',
+            filter: ['has', 'point_count'],
+            layout: {
+                'text-field': '{point_count_abbreviated}',
+                'text-size': 12
+            }
+        });
+    }
 }
 
-// 4. BÖLÜM: YARDIMCILAR VE ETKİLEŞİM
-function rotate() {
-    if (!isRotating || map.getZoom() > 5 || isUserInteracting) return;
-    const center = map.getCenter();
-    center.lng -= 1.2;
-    map.easeTo({ center, duration: 1000, easing: n => n });
-}
 
-map.on('mousedown', () => isUserInteracting = true);
-map.on('mouseup', () => { isUserInteracting = false; rotate(); });
-map.on('moveend', () => { if (isRotating && !isUserInteracting) rotate(); });
 
-function toggleRotation() {
-    isRotating = !isRotating;
-    document.getElementById('rotation-btn').innerText = isRotating ? '🌎 Durdur' : '🔄 Döndür';
-    if (isRotating) rotate();
-}
 
-function toggleLegend() {
-    const l = document.getElementById('legend');
-    if (l) l.style.display = (l.style.display === 'none' || l.style.display === '') ? 'block' : 'none';
-}
 
-function changeTime(r) { 
-    currentRange = r; 
-    // Buton aktiflik sınıflarını güncelle
-    document.querySelectorAll('.time-btn').forEach(b => b.classList.toggle('btn-active', b.innerText.includes(r === 'hour' ? '1' : r === 'day' ? '24' : '7')));
-    fetchData(); 
-}
 
-function changeMag(m) { 
-    currentMag = m; 
-    document.querySelectorAll('.mag-btn').forEach(b => b.classList.toggle('btn-active', b.innerText.includes(m === 0 ? 'Hepsi' : m.toString())));
-    render(); 
-}
 
-function toggleTheme() { 
-    const isDark = map.getStyle().name.includes('Dark'); 
-    map.setStyle('mapbox://styles/mapbox/' + (isDark ? 'streets-v12' : 'dark-v11')); 
-}
-
-map.on('style.load', () => { map.setFog({}); rotate(); fetchData(); });
-setInterval(fetchData, 120000);
