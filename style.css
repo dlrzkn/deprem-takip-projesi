@@ -1,4 +1,17 @@
-/* 1. SON AKTİVİTE LİSTESİ (Alt Panelin Üstünde) */
+/* --- GENEL AYARLAR (En üste ekle) --- */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; }
+#map { position:absolute; inset:0; background:#000; }
+
+.glass-effect { 
+    background: rgba(15,15,15,0.75); 
+    backdrop-filter: blur(15px); 
+    border: 1px solid rgba(255,255,255,0.1); 
+    color: #fff; 
+}
+
+/* --- SENİN PAYLAŞTIĞIN BÖLÜMLER (Sırasıyla devam et) --- */
+
+/* 1. SON AKTİVİTE LİSTESİ */
 #earthquake-list-container {
     position: absolute;
     bottom: 220px; 
@@ -20,7 +33,7 @@
 .list-item { padding: 8px; font-size: 10px; background: rgba(255, 255, 255, 0.03); margin-bottom: 5px; border-radius: 6px; cursor: pointer; }
 .list-mag { font-size: 13px; font-weight: 900; }
 
-/* 2. FİLTRE PANELİ (Sol Alt Köşe) */
+/* 2. FİLTRE PANELİ */
 .bottom-panel {
     position: absolute;
     bottom: 20px; 
@@ -42,12 +55,12 @@ button { flex: 1; padding: 6px 2px; font-size: 9px; border-radius: 6px; backgrou
 .btn-active { background: #ff9900 !important; color: #000 !important; font-weight: bold; }
 .label { font-size: 8px; color: #ff9900; font-weight: 800; text-transform: uppercase; }
 
-/* 3. BÜYÜKLÜK ÖLÇEĞİ (Legend) - Listenin Önünde Açılır */
+/* 3. BÜYÜKLÜK ÖLÇEĞİ (Legend) */
 .legend-box {
     position: absolute;
     bottom: 220px; 
     left: 20px;    
-    z-index: 110; /* Listenin üzerinde görünmesi için z-index yüksek */
+    z-index: 110; 
     width: 260px;  
     padding: 15px;
     border-radius: 15px;
@@ -61,7 +74,7 @@ button { flex: 1; padding: 6px 2px; font-size: 9px; border-radius: 6px; backgrou
 .l-item { display: flex; align-items: center; gap: 8px; font-size: 10px; margin-bottom: 6px; }
 .l-item span { width: 10px; height: 10px; border-radius: 50%; }
 
-/* 4. AMPUL BUTONU (Filtrenin Yanında) */
+/* 4. AMPUL BUTONU */
 .br { 
     position: absolute;
     bottom: 20px; 
@@ -78,3 +91,10 @@ button { flex: 1; padding: 6px 2px; font-size: 9px; border-radius: 6px; backgrou
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* --- EKSTRA BUTONLAR VE LOADER (Hizalama için gerekli) --- */
+.corner-btn { position: absolute; z-index: 100; padding: 10px; border-radius: 12px; cursor: pointer; color: #fff; }
+.tl { top: 20px; left: 20px; }
+.tr { top: 20px; right: 20px; }
+.style-scroll::-webkit-scrollbar { width: 4px; }
+.style-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
