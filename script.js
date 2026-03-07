@@ -46,7 +46,6 @@ async function fetchData() {
                         geometry: { type: 'Point', coordinates: [parseFloat(coords[0]), parseFloat(coords[1])] },
                         properties: {
                             mag: parseFloat(props.mag || props.magnitude || 0),
-                            // "Bilinmeyen Bölge" hatasını burası çözer:
                             place: props.place || props.region || props.flynn_region || "Bilinmeyen Bölge",
                             time: new Date(props.time || props.m_time).getTime(),
                             url: customUrl || "#"
@@ -117,7 +116,7 @@ function render() {
     updateList(filteredData);
 }
 
-// 3. BÖLÜM: ETKİLEŞİM VE YARDIMCILAR
+// 3. BÖLÜM: ETKİLEŞİM VE LİSTELEME
 function updateList(data) {
     const listContainer = document.getElementById('earthquake-list');
     const countEl = document.getElementById('list-count');
@@ -125,12 +124,16 @@ function updateList(data) {
     listContainer.innerHTML = '';
     const sortedData = [...data].sort((a, b) => b.properties.time - a.properties.time);
     
-    // Sayaç güncellemesi:
     if (countEl) countEl.innerText = `${sortedData.length} Deprem`;
 
     sortedData.slice(0, 30).forEach(f => {
         const { mag, place, time } = f.properties;
         const color = mag >= 7 ? '#c0392b' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
+        
+        // Türkiye Bayrağı Kontrolü
+        const isTurkey = place.toLowerCase().includes("turkey") || place.toLowerCase().includes("türkiye");
+        const flag = isTurkey ? " 🇹🇷" : "";
+
         const item = document.createElement('div');
         item.className = 'list-item';
         item.innerHTML = `
@@ -138,7 +141,7 @@ function updateList(data) {
                 <span class="list-mag" style="color:${color}">${mag.toFixed(1)}</span>
                 <span class="source-tag tag-${f.sourceId.toLowerCase()}" style="font-size:8px;">${f.sourceId}</span>
             </div>
-            <span class="list-place" title="${place}">${place}</span>
+            <span class="list-place" title="${place}">${place}${flag}</span>
             <small style="font-size:9px; color:#888;">${new Date(time).toLocaleTimeString('tr-TR')}</small>
         `;
         item.onclick = () => {
@@ -149,7 +152,7 @@ function updateList(data) {
     });
 }
 
-// AKILLI ROTASYON
+// YARDIMCI FONKSİYONLAR VE KONTROLLER
 map.on('mousedown', () => { isUserInteracting = true; });
 map.on('touchstart', () => { isUserInteracting = true; });
 map.on('mouseup', () => { isUserInteracting = false; if(isRotating) rotate(); });
@@ -165,8 +168,15 @@ map.on('moveend', () => { if (isRotating && !isUserInteracting) rotate(); });
 
 function toggleRotation() {
     isRotating = !isRotating;
-    document.getElementById('rotation-btn').innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür';
+    const btn = document.getElementById('rotation-btn');
+    if(btn) btn.innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür';
     if (isRotating) { isUserInteracting = false; rotate(); }
+}
+
+function toggleLegend() {
+    const legend = document.getElementById('legend');
+    if (!legend) return;
+    legend.style.display = (legend.style.display === 'none' || legend.style.display === '') ? 'block' : 'none';
 }
 
 function changeTime(r) { currentRange = r; updateBtn('.time-btn', event.target); fetchData(); }
