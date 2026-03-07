@@ -69,3 +69,79 @@ button:hover { background:rgba(255,255,255,0.1); }
 @keyframes spin { to { transform:rotate(360deg); } }
 .sismic-marker { border-radius:50%; border:1px solid #fff; cursor:pointer; box-shadow:0 0 10px rgba(0,0,0,0.5); }
 
+/* --- PROFESYONEL POPUP TASARIMI (En Alta Ekle) --- */
+
+/* Standart beyaz kutuyu sismik istasyon temasına çevirir */
+.mapboxgl-popup-content {
+    background: rgba(15, 15, 15, 0.9) !important;
+    color: white !important;
+    border-radius: 12px !important;
+    padding: 0 !important; /* Header'ın tam oturması için */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6) !important;
+}
+
+/* Popup'ın altındaki küçük üçgenin rengi */
+.mapboxgl-popup-tip {
+    border-top-color: rgba(15, 15, 15, 0.9) !important;
+}
+
+.pro-popup-content {
+    min-width: 200px;
+    overflow: hidden;
+}
+
+/* Magnitüd değerini gösteren renkli üst bant */
+.popup-header {
+    padding: 10px;
+    font-weight: 800;
+    font-size: 1.3em;
+    color: #000;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.popup-body {
+    padding: 15px;
+}
+
+.popup-body strong {
+    display: block;
+    margin-bottom: 10px;
+    color: #ff9900;
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.popup-body p {
+    font-size: 11px;
+    margin: 6px 0;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* USGS Analiz Butonu */
+.usgs-link-btn {
+    display: block;
+    margin-top: 12px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    text-decoration: none;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.usgs-link-btn:hover {
+    background: #ff9900;
+    color: #000;
+    border-color: #ff9900;
+    transform: translateY(-2px);
+}
