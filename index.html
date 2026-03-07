@@ -18,30 +18,28 @@
     <div id="last-update">--:--:--</div>
 </div>
 
+<button id="filter-toggle-btn" class="glass-effect" onclick="toggleFilterPanel()" title="Filtreleri Göster/Gizle">🔍</button>
 
-    <button id="theme-toggle" class="glass-effect corner-btn tr" onclick="toggleTheme()">🌓</button>
-    <button id="rotation-btn" class="glass-effect corner-btn tl" onclick="toggleRotation()">🌎 Durdur</button>
-    <button id="legend-btn" class="glass-effect corner-btn br" onclick="toggleLegend()">💡</button>
-
-    <div class="bottom-panel glass-effect">
-        <div class="filter-group">
-            <span class="label">Magnitüd (Mw)</span>
-            <div class="btn-row">
-                <button class="mag-btn btn-active" onclick="changeMag(0)">Hepsi</button>
-                <button class="mag-btn" onclick="changeMag(4.5)">4.5+</button>
-                <button class="mag-btn" onclick="changeMag(6.0)">6.0+</button>
-            </div>
-        </div>
-        <div class="filter-group">
-            <span class="label">Zaman Aralığı</span>
-            <div class="btn-row">
-                <button class="time-btn" onclick="changeTime('hour')">1 Saat</button>
-                <button class="time-btn btn-active" onclick="changeTime('day')">24 Saat</button>
-                <button class="time-btn" onclick="changeTime('week')">7 Gün</button>
-            </div>
+<div id="filter-panel" class="bottom-panel glass-effect" style="display: none;">
+    <div class="filter-group">
+        <span class="label">Magnitüd (Mw)</span>
+        <div class="btn-row">
+            <button class="mag-btn btn-active" onclick="changeMag(0)">Hepsi</button>
+            <button class="mag-btn" onclick="changeMag(4.5)">4.5+</button>
+            <button class="mag-btn" onclick="changeMag(6.0)">6.0+</button>
         </div>
     </div>
+    <div class="filter-group">
+        <span class="label">Zaman Aralığı</span>
+        <div class="btn-row">
+            <button class="time-btn" onclick="changeTime('hour')">1 Saat</button>
+            <button class="time-btn btn-active" onclick="changeTime('day')">24 Saat</button>
+            <button class="time-btn" onclick="changeTime('week')">7 Gün</button>
+        </div>
+    </div>
+</div>
 
+    
     <div id="legend" class="legend-box glass-effect">
         <h4>Magnitüd Ölçeği (Mw)</h4>
         <div class="l-item"><span style="background:#2ecc71"></span> Mikro (&lt; 3.0)</div>
