@@ -42,23 +42,33 @@ function render() {
         .filter(f => f.properties.mag >= currentMag)
         .map(f => {
             const mag = f.properties.mag;
+            const props = f.properties; // Kolay erişim için
+            const coords = f.geometry.coordinates; // [boylam, enlem, derinlik]
             const color = mag >= 8 ? '#8e44ad' : mag >= 7 ? '#c0392b' : mag >= 6 ? '#e74c3c' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
+            
             const el = document.createElement('div');
             el.className = 'sismic-marker';
             el.style.cssText = `background:${color}; width:${mag*3+6}px; height:${mag*3+6}px;`;
 
             return new mapboxgl.Marker(el)
-                .setLngLat(f.geometry.coordinates)
+                .setLngLat([coords[0], coords[1]])
                 .setPopup(new mapboxgl.Popup({ offset: 15 }).setHTML(`
-                    <div style="color:#000; padding:5px;">
-                        <strong style="color:${color}">${f.properties.place}</strong><br>
-                        <b>Büyüklük:</b> ${mag} Mw<br>
-                        <a href="${f.properties.url}" target="_blank" style="color:#ff9900; font-size:11px; font-weight:bold; text-decoration:none;">USGS Detayları ↗</a>
+                    <div class="pro-popup-content">
+                        <div class="popup-header" style="background:${color};">
+                            Mw ${mag.toFixed(1)}
+                        </div>
+                        <div class="popup-body">
+                            <strong>${props.place}</strong>
+                            <p>📏 <b>Derinlik:</b> ${coords[2] ? coords[2].toFixed(1) : '0'} km</p>
+                            <p>🕒 <b>Zaman:</b> ${new Date(props.time).toLocaleString('tr-TR')}</p>
+                            <a href="${props.url}" target="_blank" class="usgs-link-btn">USGS ANALİZİ ↗</a>
+                        </div>
                     </div>
                 `))
                 .addTo(map);
         });
 }
+
 
 function changeTime(r) { currentRange = r; updateBtn('.time-btn', event.target); fetchData(); }
 function changeMag(m) { currentMag = m; updateBtn('.mag-btn', event.target); render(); }
