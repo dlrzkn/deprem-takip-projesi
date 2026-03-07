@@ -19,10 +19,11 @@ async function fetchData() {
 
     // Kaynak tanımları (Priority: 0 en yüksek)
     const sources = [
-        { id: 'EMSC', url: 'https://www.emsc-csem.org/fdsnws/event/1/query?format=json&limit=250', priority: 0 },
-        { id: 'USGS', url: `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_${currentRange}.geojson`, priority: 1 },
-        { id: 'GEOFON', url: 'https://geofon.gfz.de/fdsnws/event/1/query?format=json&limit=150', priority: 2 }
-    ];
+    { id: 'EMSC', url: 'https://www.seismicportal.eu/fdsnws/event/1/query?format=json&limit=100', priority: 0 },
+    { id: 'USGS', url: `https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_${currentRange}.geojson`, priority: 1 },
+    { id: 'GFZ', url: 'https://geofon.gfz.de/fdsnws/event/1/query?format=json&limit=50', priority: 2 }
+];
+
 
     try {
         // Tüm API'lere aynı anda istek at
