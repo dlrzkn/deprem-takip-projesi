@@ -116,3 +116,16 @@ document.getElementById('spin-btn').onclick = function() {
     this.textContent = `Otomatik Dönüş: ${spinEnabled ? 'AÇIK' : 'KAPALI'}`;
     this.classList.toggle('btn-active', spinEnabled);
 };
+
+window.toggleLegend = function() {
+    const legend = document.getElementById('legend');
+    const openBtn = document.getElementById('legend-open-btn');
+    
+    if (legend.classList.contains('closed')) {
+        legend.classList.remove('closed');
+        openBtn.style.display = 'none';
+    } else {
+        legend.classList.add('closed');
+        openBtn.style.display = 'block';
+    }
+};
