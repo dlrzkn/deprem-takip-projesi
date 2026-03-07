@@ -1,143 +1,82 @@
-/* Temel Sıfırlama ve Harita */
+/* Genel Ayarlar ve Harita */
 body, html { 
-    margin: 0; padding: 0; height: 100%; width: 100%;
-    overflow: hidden; font-family: 'Segoe UI', sans-serif;
+    margin: 0; padding: 0; height: 100%; width: 100%; 
+    overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; 
 }
-
 #map { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; }
 
-/* Sol Panel (Sidebar) Tasarımı */
+/* Üst Orta Canlı Gösterge (Pulse Efekti) */
+.live-indicator {
+    position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7); padding: 8px 15px; border-radius: 30px;
+    display: flex; align-items: center; gap: 10px; z-index: 20;
+    backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+}
+
+.pulse-dot {
+    width: 8px; height: 8px; background-color: #ff4d4d; border-radius: 50%;
+    box-shadow: 0 0 0 rgba(255, 77, 77, 0.4);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+}
+
+.live-text { color: white; font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+
+
+/* Sol Sidebar Paneli */
 .control-panel {
-    position: absolute;
-    top: 15px; left: 15px; bottom: 15px; /* Paneli aşağı kadar uzattık */
-    width: 210px; /* Daha dar ve estetik */
-    background: rgba(255, 255, 255, 0.9);
-    padding: 15px;
-    border-radius: 12px;
-    z-index: 10;
-    display: flex;
-    flex-direction: column; /* İçerikleri dikey dizer */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    backdrop-filter: blur(5px);
+    position: absolute; top: 15px; left: 15px; bottom: 15px;
+    width: 200px; background: rgba(255, 255, 255, 0.92);
+    padding: 15px; border-radius: 15px; z-index: 10;
+    display: flex; flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15); backdrop-filter: blur(10px);
 }
 
-.filter-group { margin-bottom: 12px; }
-.filter-group h4 { margin: 0 0 8px 0; font-size: 11px; color: #333; text-transform: uppercase; }
+.panel-header { margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+#last-update { font-size: 9px; color: #888; margin-bottom: 8px; }
 
-/* Buton Düzeni (Grid) */
+/* Renkli Kaynak Rozetleri */
+.stat-container { display: flex; gap: 4px; }
+.stat-badge { font-size: 8px; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; }
+.tag-emsc { background: #3498db; } 
+.tag-usgs { background: #e67e22; } 
+.tag-gfz { background: #9b59b6; }
+
+/* Buton ve Filtre Grupları */
+.filter-group h4 { margin: 8px 0; font-size: 11px; color: #333; text-transform: uppercase; }
 .btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+button { cursor: pointer; border: 1px solid #eee; padding: 6px 2px; border-radius: 6px; font-size: 10px; background: white; transition: 0.2s; }
+.btn-active { background: #2c3e50 !important; color: white !important; }
 
-button {
-    cursor: pointer; border: 1px solid #ddd; padding: 6px 2px;
-    border-radius: 6px; font-size: 10px; background: white;
-    transition: all 0.2s ease;
+
+/* Sidebar Liste Alanı */
+.sidebar-list-container { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; margin-top: 10px; }
+#earthquake-list { overflow-y: auto; flex-grow: 1; }
+.list-item { padding: 10px 5px; border-bottom: 1px solid #f8f8f8; cursor: pointer; transition: 0.2s; }
+.list-item:hover { background: rgba(0,0,0,0.03); }
+
+/* Cam Efektli Modern Popup */
+.mapboxgl-popup-content {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border-radius: 12px !important; padding: 0 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
 }
 
-button:hover { background: #f0f0f0; }
-.btn-active { background: #2c3e50 !important; color: white !important; border-color: #2c3e50 !important; }
+.popup-card { min-width: 180px; overflow: hidden; }
+.popup-header { padding: 10px; color: white; display: flex; justify-content: space-between; align-items: center; }
+.popup-body { padding: 12px; font-size: 12px; color: #333; }
+.popup-footer { padding: 8px; background: #f8f9fa; text-align: center; border-top: 1px solid #eee; }
+.popup-link { text-decoration: none; color: #2c3e50; font-size: 10px; font-weight: bold; }
 
-.action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 5px; }
-
-/* Sidebar İçindeki Liste Konteynırı */
-.sidebar-list-container {
-    margin-top: 15px;
-    flex-grow: 1; /* Panelin kalan tüm boşluğunu liste kaplasın */
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Dışarı taşmaları engelle */
-    border-top: 1px solid #eee;
-}
-
-#list-count {
-    font-size: 11px;
-    font-weight: bold;
-    padding: 10px 0;
-    color: #2c3e50;
-    text-align: left;
-}
-
-/* Kaydırılabilir Liste Alanı */
-#earthquake-list {
-    overflow-y: auto; /* Sadece dikeyde kaydırma çubuğu çıksın */
-    flex-grow: 1;
-    padding-right: 5px;
-}
-
-/* Liste Elemanı Tasarımı (Daha kompakt) */
-.list-item {
-    padding: 10px 5px;
-    border-bottom: 1px solid #f0f0f0;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.list-item:hover {
-    background: rgba(0, 0, 0, 0.03);
-}
-
-.list-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.mag-badge {
-    font-weight: bold;
-    font-size: 13px;
-    min-width: 30px;
-}
-
-.source-label {
-    font-size: 8px;
-    background: #eee;
-    padding: 1px 4px;
-    border-radius: 3px;
-    color: #666;
-}
-
-.place-text {
-    font-size: 11px;
-    color: #333;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; /* Uzun isimleri "..." şeklinde keser */
-}
-
-.time-text {
-    font-size: 9px;
-    color: #888;
-    margin-top: 2px;
-}
-
-/* İnce ve Şık Kaydırma Çubuğu (Scrollbar) */
-#earthquake-list::-webkit-scrollbar {
-    width: 4px;
-}
-
-#earthquake-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-#earthquake-list::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 10px;
-}
-
-/* Yükleme Ekranı (Daha kompakt üst bildirim şeklinde) */
+/* Loader Bildirimi */
 #loader {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(44, 62, 80, 0.9);
-    color: white;
-    padding: 8px 20px;
-    border-radius: 20px;
-    z-index: 1000;
-    font-size: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(44, 62, 80, 0.9); color: white; padding: 8px 20px;
+    border-radius: 20px; z-index: 1000; font-size: 11px;
 }
+
