@@ -1,3 +1,4 @@
+// Mapbox Token
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtbWY2ZG5pNDA0cmwycnNodm1jdTN3cmQifQ.Sf5rAPwn1JZfwpDF_blj8Q';
 
 const map = new mapboxgl.Map({
@@ -28,11 +29,10 @@ async function fetchData() {
                 const rawData = result.value.features || (Array.isArray(result.value) ? result.value : []);
                 
                 const standardized = rawData.map(f => {
-                    const props = f.properties || f;
+                    const props = f.properties ? f.properties : f;
                     const coords = f.geometry ? f.geometry.coordinates : [f.longitude, f.latitude];
                     const eventId = props.unid || f.id;
                     
-                    // URL Mantığı: Her kurumun kendine has link yapısı
                     let customUrl = props.url;
                     if (sInfo.id === 'EMSC' && eventId) customUrl = `https://www.emsc-csem.org/event/${eventId}`;
                     else if (sInfo.id === 'GFZ' && eventId) customUrl = `https://geofon.gfz.de/event/gfz${eventId}`;
@@ -43,7 +43,8 @@ async function fetchData() {
                         geometry: { type: 'Point', coordinates: [parseFloat(coords[0]), parseFloat(coords[1])] },
                         properties: {
                             mag: parseFloat(props.mag || props.magnitude || 0),
-                            place: props.place || props.region || "Bilinmeyen Bölge",
+                            // Bölge ismi hatasını burada çözüyoruz:
+                            place: props.place || props.region || props.flynn_region || "Bilinmeyen Bölge",
                             time: new Date(props.time || props.m_time).getTime(),
                             url: customUrl || "#"
                         }
@@ -56,13 +57,20 @@ async function fetchData() {
         allData = smartDeduplicate(mergedFeatures);
         render();
         
-        // İstatistik Paneli Güncelleme
+        // Üst bar istatistik güncelleme
         const stats = allData.reduce((acc, curr) => { acc[curr.sourceId] = (acc[curr.sourceId] || 0) + 1; return acc; }, {});
         const updateEl = document.getElementById('last-update');
         if(updateEl) updateEl.innerText = `E:${stats.EMSC || 0} U:${stats.USGS || 0} G:${stats.GFZ || 0} | ${new Date().toLocaleTimeString('tr-TR')}`;
     } catch (e) { console.error("Veri hatası:", e); }
     finally { if(loader) loader.style.display = 'none'; }
 }
+
+
+
+
+
+
+
 
 
 
@@ -112,22 +120,34 @@ function render() {
             .setPopup(new mapboxgl.Popup({ offset: 20 }).setHTML(popupHTML))
             .addTo(map);
         
-        f.marker = marker; // Popup'ı listeden açabilmek için referans tutuyoruz
+        f.marker = marker; // Popup'ı listeden açabilmek için
         return marker;
     });
     updateList(filteredData);
 }
 
 
+
+
+
+
+
+
 function updateList(data) {
     const listContainer = document.getElementById('earthquake-list');
+    const countEl = document.getElementById('list-count');
     if (!listContainer) return;
+
     listContainer.innerHTML = '';
     const sortedData = [...data].sort((a, b) => b.properties.time - a.properties.time);
+    
+    // Sayaç hatasını burada çözüyoruz:
+    if (countEl) countEl.innerText = `${sortedData.length} Deprem`;
 
     sortedData.slice(0, 30).forEach(f => {
         const { mag, place, time } = f.properties;
         const color = mag >= 7 ? '#c0392b' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
+        
         const item = document.createElement('div');
         item.className = 'list-item';
         item.innerHTML = `
@@ -138,6 +158,7 @@ function updateList(data) {
             <span class="list-place">${place}</span>
             <small style="font-size:9px; color:#888;">${new Date(time).toLocaleTimeString('tr-TR')}</small>
         `;
+        
         item.onclick = () => {
             map.flyTo({ center: f.geometry.coordinates, zoom: 8, duration: 1500 });
             if(f.marker) f.marker.togglePopup();
@@ -146,7 +167,6 @@ function updateList(data) {
     });
 }
 
-// Yardımcı Kontroller
 function rotate() { if (!isRotating || map.getZoom() > 5) return; const center = map.getCenter(); center.lng -= 1.2; map.easeTo({ center, duration: 1000, easing: n => n }); }
 map.on('moveend', () => { if(isRotating) rotate(); });
 function toggleRotation() { isRotating = !isRotating; document.getElementById('rotation-btn').innerHTML = isRotating ? '🌎 Durdur' : '🔄 Döndür'; if(isRotating) rotate(); }
@@ -156,6 +176,4 @@ function updateBtn(cls, target) { document.querySelectorAll(cls).forEach(b => b.
 function toggleTheme() { const isDark = map.getStyle().name.includes('Dark'); map.setStyle('mapbox://styles/mapbox/' + (isDark ? 'streets-v12' : 'dark-v11')); }
 
 map.on('style.load', () => { map.setFog({}); rotate(); fetchData(); });
-setInterval(fetchData, 120000); // 2 dakikada bir oto-tazele
-
-
+setInterval(fetchData, 120000); // 2 dakikada bir güncelle
