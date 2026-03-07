@@ -6,14 +6,20 @@ body {
     font-family: 'Inter', sans-serif;
     color: #fff;
 }
-
 #map {
     position: absolute;
     top: 0;
     bottom: 0;
     width: 100%;
-    height: 100vh;
+    height: 100vh !important; /* Yüksekliği zorla */
+    z-index: 1; /* En altta kalsın ama görünür olsun */
 }
+
+.loader-wrapper {
+    /* ... diğer ayarlar aynı ... */
+    pointer-events: none; /* Arkadaki haritaya dokunmanı engellemesin */
+}
+
 
 /* Cam Efekti (Glassmorphism) */
 .glass-effect {
