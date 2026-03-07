@@ -13,7 +13,9 @@
 </head>
 <body>
 
-    <div id="map"></div>
+    <div id="map" style="height: 100vh; width: 100vw; position: absolute; top: 0; left: 0;"></div>
+
+
 
     <div class="top-bar">
         <div class="live-indicator">
@@ -39,7 +41,7 @@
         
         <div class="legend glass-effect" id="legend-panel">
             <div class="legend-header">
-                <h4>Deprem Şiddeti</h4>
+                <h4>Deprem Büyüklüğü</h4>
                 <p>Mw Ölçeğine Göre</p>
             </div>
             
@@ -54,7 +56,7 @@
             
             <div class="legend-footer">
                 <hr>
-                <p>Kaynak: Kandilli Rasathanesi & USGS</p>
+                <p>Kaynak: USGS</p>
             </div>
         </div>
     </div>
@@ -63,6 +65,13 @@
         <div class="spinner"></div>
         <p>Sismik veriler yükleniyor...</p>
     </div>
+<script>
+    // Eğer 10 saniye içinde JS haritayı açamazsa, yükleme ekranını zorla kaldır.
+    setTimeout(function() {
+        var loader = document.getElementById('loader');
+        if (loader) loader.style.display = 'none';
+    }, 10000);
+</script>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js"></script>
     <script src="script.js"></script>
