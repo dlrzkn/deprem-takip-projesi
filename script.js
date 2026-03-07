@@ -4,8 +4,10 @@ const EarthquakeApp = {
     currentMag: 0,
     currentRange: 'day',
     allData: [],
+    isRotating: true,
+    isUserInteracting: false,
 
-    // Uygulamayı başlatan ana fonksiyon
+    // 1. BAŞLATMA
     init() {
         mapboxgl.accessToken = this.accessToken;
         this.map = new mapboxgl.Map({
@@ -16,22 +18,17 @@ const EarthquakeApp = {
             projection: 'globe'
         });
 
-        // Harita stili yüklendiğinde tüm alt sistemleri çalıştır
         this.map.on('style.load', () => {
-            this.setupSources();      // Bölüm 1
-            this.setupLayers();       // Bölüm 1
-            this.setupInteractions();  // Bölüm 3
-            this.setupRotation();     // Bölüm 3
-            this.fetchData();         // Bölüm 2
+            this.setupSources();
+            this.setupLayers();
+            this.setupInteractions();
+            this.setupRotation();
+            this.fetchData();
         });
     },
 
-
-        // Rotasyon ve etkileşim ayarlarını buraya taşıyacağız
-    },
-
     setupSources() {
-        // Veriyi tutacak ana kaynak. Cluster (kümeleme) aktif.
+        if (this.map.getSource('earthquakes')) return;
         this.map.addSource('earthquakes', {
             type: 'geojson',
             data: { type: 'FeatureCollection', features: [] },
@@ -42,7 +39,7 @@ const EarthquakeApp = {
     },
 
     setupLayers() {
-        // 1. Kümelenmiş (Cluster) Depremler
+        // Kümelenmiş Depremler
         this.map.addLayer({
             id: 'clusters',
             type: 'circle',
@@ -54,7 +51,6 @@ const EarthquakeApp = {
             }
         });
 
-        // 2. Küme Sayıları (Text)
         this.map.addLayer({
             id: 'cluster-count',
             type: 'symbol',
@@ -67,7 +63,7 @@ const EarthquakeApp = {
             }
         });
 
-        // 3. Tekil Depremler (Unclustered Points)
+        // Tekil Depremler
         this.map.addLayer({
             id: 'unclustered-point',
             type: 'circle',
@@ -84,23 +80,18 @@ const EarthquakeApp = {
                 'circle-opacity': 0.8
             }
         });
-    }
-};
+    },
 
-EarthquakeApp.init();
-
-
-
-    // Mesafe hesaplama (Haversine Formülü) - Jeofiziksel doğruluk için
+    // 2. VERİ YÖNETİMİ
     calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; // Dünya yarıçapı (km)
+        const R = 6371; 
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                   Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                   Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Kilometre cinsinden sonuç
+        return R * c;
     },
 
     async fetchData() {
@@ -126,8 +117,6 @@ EarthquakeApp.init();
                         const props = f.properties || f;
                         const coords = f.geometry ? f.geometry.coordinates : [f.longitude, f.latitude];
                         const eventId = props.unid || f.id;
-                        
-                        // Link oluşturma mantığı
                         let url = props.url || "#";
                         if (sInfo.id === 'EMSC' && eventId) url = `https://www.emsc-csem.org/event/${eventId}`;
 
@@ -151,23 +140,19 @@ EarthquakeApp.init();
             this.allData = this.smartDeduplicate(rawFeatures);
             this.updateMapSource();
             this.updateUIStats();
-            
         } catch (error) {
-            console.error("Veri senkronizasyon hatası:", error);
+            console.error("Veri hatası:", error);
         } finally {
             if (loader) loader.style.display = 'none';
         }
     },
 
     smartDeduplicate(data) {
-        // Önce önceliğe göre sırala (EMSC > USGS > GFZ gibi)
         data.sort((a, b) => a.properties.priority - b.properties.priority);
-        
         const final = [];
         data.forEach(item => {
             const isDuplicate = final.some(existing => {
                 const tDiff = Math.abs(item.properties.time - existing.properties.time);
-                // 50km ve 60 saniye tolerans (Jeofiziksel standartlara yakın)
                 const dDiff = this.calculateDistance(
                     item.geometry.coordinates[1], item.geometry.coordinates[0],
                     existing.geometry.coordinates[1], existing.geometry.coordinates[0]
@@ -180,26 +165,21 @@ EarthquakeApp.init();
     },
 
     updateMapSource() {
-        // Filtreleme: Kullanıcının seçtiği büyüklükten küçükleri haritaya gönderme
         const filtered = {
             type: 'FeatureCollection',
             features: this.allData.filter(f => f.properties.mag >= this.currentMag)
         };
-        // Harita kaynağını tek seferde güncelle (Performans buradadır)
         if (this.map.getSource('earthquakes')) {
             this.map.getSource('earthquakes').setData(filtered);
         }
-    }
+    },
 
-
-
+    // 3. ETKİLEŞİM
     setupInteractions() {
-        // Tıklama Olayı: Deprem noktasına tıklandığında popup aç
         this.map.on('click', 'unclustered-point', (e) => {
             const coordinates = e.features[0].geometry.coordinates.slice();
             const { mag, place, time, url, source } = e.features[0].properties;
 
-            // Küre projeksiyonunda koordinat kayması hatasını engelleme
             while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
                 coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
             }
@@ -207,28 +187,22 @@ EarthquakeApp.init();
             new mapboxgl.Popup({ offset: 15, closeButton: false })
                 .setLngLat(coordinates)
                 .setHTML(`
-                    <div style="font-family:'Segoe UI', Tahoma, sans-serif; min-width:180px; padding:10px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <span style="background:#eee; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${source}</span>
-                            <b style="font-size:16px; color:${mag >= 5 ? '#e67e22' : '#2ecc71'}">${mag.toFixed(1)} Mw</b>
+                    <div style="font-family:sans-serif; min-width:180px; padding:10px; color:#000;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <span style="background:#eee; padding:2px 6px; border-radius:4px; font-size:10px;">${source}</span>
+                            <b style="color:${mag >= 5 ? '#e67e22' : '#2ecc71'}">${mag.toFixed(1)} Mw</b>
                         </div>
-                        <strong style="display:block; font-size:13px; margin-bottom:5px; color:#333;">${place}</strong>
-                        <div style="font-size:11px; color:#666; margin-bottom:10px;">
-                            ${new Date(time).toLocaleString('tr-TR')}
-                        </div>
-                        <a href="${url}" target="_blank" style="display:block; text-align:center; background:#2c3e50; color:#fff; text-decoration:none; padding:6px; border-radius:4px; font-size:11px; transition:0.3s;">
-                            AFAD / KAYNAK DETAYI ↗
-                        </a>
+                        <strong style="display:block; font-size:13px; margin-bottom:5px;">${place}</strong>
+                        <div style="font-size:11px; color:#666; margin-bottom:10px;">${new Date(time).toLocaleString('tr-TR')}</div>
+                        <a href="${url}" target="_blank" style="display:block; text-align:center; background:#2c3e50; color:#fff; text-decoration:none; padding:6px; border-radius:4px; font-size:11px;">DETAYLAR ↗</a>
                     </div>
                 `)
                 .addTo(this.map);
         });
 
-        // Mouse imlecini değiştir (UX iyileştirmesi)
         this.map.on('mouseenter', 'unclustered-point', () => { this.map.getCanvas().style.cursor = 'pointer'; });
         this.map.on('mouseleave', 'unclustered-point', () => { this.map.getCanvas().style.cursor = ''; });
 
-        // Cluster'a (Küme) tıklandığında zoom yap
         this.map.on('click', 'clusters', (e) => {
             const features = this.map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
             const clusterId = features[0].properties.cluster_id;
@@ -239,37 +213,21 @@ EarthquakeApp.init();
         });
     },
 
-    // Akıllı Rotasyon Yönetimi
-    isRotating: true,
-    isUserInteracting: false,
-
     setupRotation() {
         const rotate = () => {
             if (!this.isRotating || this.map.getZoom() > 5 || this.isUserInteracting) return;
             const center = this.map.getCenter();
-            center.lng -= 0.8; // Dönüş hızı
+            center.lng -= 0.8;
             this.map.easeTo({ center, duration: 1000, easing: n => n });
         };
-
         this.map.on('mousedown', () => { this.isUserInteracting = true; });
         this.map.on('mouseup', () => { this.isUserInteracting = false; rotate(); });
         this.map.on('moveend', () => { rotate(); });
-
-        // İlk başlatma
         rotate();
     },
 
-    toggleRotation() {
-        this.isRotating = !this.isRotating;
-        const btn = document.getElementById('rotation-btn');
-        if (btn) btn.innerHTML = this.isRotating ? '🌎 Durdur' : '🔄 Döndür';
-        if (this.isRotating) { this.isUserInteracting = false; this.map.setZoom(2.5); }
-    }
-
-
-
+    // 4. UI GÜNCELLEME
     updateUIStats() {
-        // İstatistik hesaplama (Reduce ile verimli gruplama)
         const stats = this.allData.reduce((acc, curr) => {
             acc[curr.properties.source] = (acc[curr.properties.source] || 0) + 1;
             return acc;
@@ -277,72 +235,48 @@ EarthquakeApp.init();
 
         const updateEl = document.getElementById('last-update');
         if (updateEl) {
-            const time = new Date().toLocaleTimeString('tr-TR');
-            updateEl.innerHTML = `
-                <span class="stat-tag">EMSC: ${stats.EMSC || 0}</span>
-                <span class="stat-tag">USGS: ${stats.USGS || 0}</span>
-                <span class="stat-tag">GFZ: ${stats.GFZ || 0}</span>
-                <span class="update-time">| ${time}</span>
-            `;
+            updateEl.innerHTML = `E: ${stats.EMSC || 0} U: ${stats.USGS || 0} G: ${stats.GFZ || 0} | ${new Date().toLocaleTimeString('tr-TR')}`;
         }
         this.renderList();
     },
 
     renderList() {
         const listContainer = document.getElementById('earthquake-list');
-        const countEl = document.getElementById('list-count');
         if (!listContainer) return;
-
         listContainer.innerHTML = '';
+        
         const filteredData = this.allData
             .filter(f => f.properties.mag >= this.currentMag)
             .sort((a, b) => b.properties.time - a.properties.time);
 
-        if (countEl) countEl.innerText = `${filteredData.length} Deprem Listeleniyor`;
-
-        // Sadece ilk 40 depremi göster (Performans için limit)
         filteredData.slice(0, 40).forEach(f => {
-            const { mag, place, time, source } = f.properties;
+            const { mag, place, time } = f.properties;
             const color = mag >= 7 ? '#c0392b' : mag >= 5 ? '#e67e22' : mag >= 3 ? '#f1c40f' : '#2ecc71';
-            
             const item = document.createElement('div');
             item.className = 'list-item';
             item.innerHTML = `
-                <div class="list-item-header">
-                    <span class="mag-badge" style="background:${color}">${mag.toFixed(1)}</span>
-                    <span class="source-label">${source}</span>
+                <div style="display:flex; justify-content:space-between;">
+                    <b style="color:${color}">${mag.toFixed(1)}</b>
+                    <small>${new Date(time).toLocaleTimeString('tr-TR')}</small>
                 </div>
-                <div class="list-item-body">
-                    <div class="place-text">${place}</div>
-                    <div class="time-text">${new Date(time).toLocaleTimeString('tr-TR')}</div>
-                </div>
+                <div style="font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${place}</div>
             `;
-            
-            item.onclick = () => {
-                this.map.flyTo({
-                    center: f.geometry.coordinates,
-                    zoom: 8,
-                    speed: 1.2,
-                    curve: 1.4,
-                    essential: true
-                });
-            };
+            item.onclick = () => this.map.flyTo({ center: f.geometry.coordinates, zoom: 8 });
             listContainer.appendChild(item);
         });
     },
 
-    // Filtreleme Fonksiyonları
     changeMag(m, event) {
         this.currentMag = m;
         this.updateBtnGroup('.mag-btn', event.target);
-        this.updateMapSource(); // Haritadaki noktaları güncelle
-        this.renderList();      // Listeyi güncelle
+        this.updateMapSource();
+        this.renderList();
     },
 
     changeTime(range, event) {
         this.currentRange = range;
         this.updateBtnGroup('.time-btn', event.target);
-        this.fetchData(); // Yeni zaman aralığı için API'lere tekrar git
+        this.fetchData();
     },
 
     updateBtnGroup(selector, target) {
@@ -351,11 +285,8 @@ EarthquakeApp.init();
     },
 
     toggleTheme() {
-        const currentStyle = this.map.getStyle().name;
-        const newStyle = currentStyle.includes('Dark') ? 'streets-v12' : 'dark-v11';
-        this.map.setStyle('mapbox://styles/mapbox/' + newStyle);
-        
-        // Stil değişince source ve layer'lar silinir, tekrar yüklemeliyiz
+        const isDark = this.map.getStyle().name.includes('Dark');
+        this.map.setStyle('mapbox://styles/mapbox/' + (isDark ? 'streets-v12' : 'dark-v11'));
         this.map.once('style.load', () => {
             this.setupSources();
             this.setupLayers();
@@ -364,6 +295,8 @@ EarthquakeApp.init();
     }
 };
 
-// Uygulamayı başlat ve her 2 dakikada bir otomatik güncelle
+// ÇALIŞTIR
+EarthquakeApp.init();
 setInterval(() => EarthquakeApp.fetchData(), 120000);
+
 
