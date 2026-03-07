@@ -1,26 +1,39 @@
 /* ==========================================================
    1. HARİTA AYARLARI
    ========================================================== */
-// Lütfen bu satırın başında veya sonunda boşluk olmadığından emin ol
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGxyemtuIiwiYSI6ImNtN2R2YXoybjAybG8ycXF6Mzh3dzBqZ3cifQ.x-G8m_H0o90S1u7T-7G9Yg';
 
 const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
     center: [35.2433, 38.9637],
-    zoom: 5,
-    projection: 'globe' // Dünyayı küre şeklinde görmek için (Süper dokunuş!)
+    zoom: 4, // Tablet için biraz daha geniş bir bakış
+    projection: 'mercator', // Tablet işlemcilerini yormamak için 'globe' yerine klasik 'mercator'
+    preserveDrawingBuffer: true,
+    antialias: true
 });
 
 let allQuakes = [];
 let markers = [];
 
 /* ==========================================================
-   2. USGS VERİSİ (DOĞRUDAN KAYNAKTAN)
+   2. LOADER TEMİZLEME (KRİTİK DOKUNUŞ)
+   ========================================================== */
+function hideLoader() {
+    const loader = document.getElementById('loader');
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+            loader.style.display = 'none';
+        }, 500);
+    }
+}
+
+/* ==========================================================
+   3. VERİ ÇEKME
    ========================================================== */
 async function fetchUSGSData() {
     try {
-        // Son 24 saatteki tüm depremler (En güvenilir kaynak)
         const response = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson');
         const data = await response.json();
         
@@ -34,15 +47,16 @@ async function fetchUSGSData() {
 
         renderMarkers(allQuakes);
         updateUI();
+        hideLoader(); // Veri geldiğinde gizle
         
     } catch (error) {
-        console.error("Veri çekme hatası:", error);
-        document.getElementById('last-update').innerText = "Veri Alınamadı!";
+        console.error("Veri hatası:", error);
+        hideLoader(); // Hata olsa bile siyah ekranı kaldır ki haritayı görebil
     }
 }
 
 /* ==========================================================
-   3. HARİTAYA İŞLEME
+   4. MARKER VE UI
    ========================================================== */
 function renderMarkers(quakes) {
     markers.forEach(m => m.remove());
@@ -50,16 +64,15 @@ function renderMarkers(quakes) {
 
     quakes.forEach(quake => {
         let color = '#2ecc71';
-        if (quake.mag >= 6.0) color = '#e74c3c';
-        else if (quake.mag >= 4.0) color = '#f1c40f';
+        if (quake.mag >= 5.0) color = '#e67e22';
+        if (quake.mag >= 6.5) color = '#e74c3c';
 
         const marker = new mapboxgl.Marker({ color: color })
             .setLngLat(quake.coords)
             .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`
-                <div style="color:black;">
+                <div style="color:black; font-family:sans-serif;">
                     <strong>${quake.title}</strong><br>
-                    Büyüklük: ${quake.mag} Mw<br>
-                    Zaman: ${quake.date}
+                    Büyüklük: ${quake.mag} Mw
                 </div>
             `))
             .addTo(map);
@@ -69,30 +82,27 @@ function renderMarkers(quakes) {
 }
 
 function updateUI() {
-    // Yükleme ekranını kaldır
-    const loader = document.getElementById('loader');
-    if(loader) {
-        loader.style.opacity = '0';
-        setTimeout(() => loader.style.display = 'none', 500);
-    }
-    
-    // Son güncelleme zamanı
     const now = new Date();
-    document.getElementById('last-update').innerText = "Güncellendi: " + now.getHours() + ":" + now.getMinutes();
+    const lastUpdate = document.getElementById('last-update');
+    if(lastUpdate) {
+        lastUpdate.innerText = "Güncellendi: " + now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    }
 }
 
-// Filtre ve Lejant fonksiyonlarını buraya eklemeyi unutma (Önceki JS'deki gibi)
+// Lejant kontrolü
 function toggleLegend() {
-    const p = document.getElementById('legend-panel');
-    p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+    const panel = document.getElementById('legend-panel');
+    if (panel) {
+        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    }
 }
 
-map.on('style.load', () => {
-    map.setFog({}); // Atmosfer efekti
+/* ==========================================================
+   5. BAŞLATICI
+   ========================================================== */
+map.on('load', () => {
     fetchUSGSData();
 });
 
-// Harita yüklenmezse hata ver
-map.on('error', (e) => {
-    console.error('Mapbox Hatası:', e);
-});
+// Eğer 5 saniye içinde harita yüklenmezse zorla siyah ekranı kaldır
+setTimeout(hideLoader, 5000);
