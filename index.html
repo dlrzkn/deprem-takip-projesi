@@ -11,16 +11,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-
-    <header class="top-bar">
+<body class="dark-mode"> <header class="top-bar">
         <div class="brand">
-            <div class="logo-pulse"></div>
-            <h1>SEISMO<span>PRO</span></h1>
+            <div class="pulse-dot"></div> <h1>SEISMO<span>PRO</span></h1>
         </div>
         <div id="live-stats" class="global-stats">
             <div class="stat-item">
-                <span class="label">SON 24S ENERJİ SALINIMI:</span>
+                <span id="energy-label" class="label">SON 24S ENERJİ SALINIMI:</span>
                 <span id="total-energy" class="value">Hesaplanıyor...</span>
             </div>
         </div>
@@ -43,12 +40,26 @@
                 </div>
 
                 <div class="filter-section">
+                    <label>Zaman Aralığı</label>
+                    <div class="btn-group-grid">
+                        <button class="filter-btn" data-time="hour">1 Saat</button>
+                        <button class="filter-btn active" data-time="day">24 Saat</button>
+                        <button class="filter-btn" data-time="week">7 Gün</button>
+                    </div>
+                </div>
+
+                <div class="filter-section">
                     <label>Odak Derinliği (km)</label>
                     <div class="btn-group-grid">
                         <button class="filter-btn active" data-depth="all">Tümü</button>
                         <button class="filter-btn" data-depth="shallow">Sığ (<70)</button>
                         <button class="filter-btn" data-depth="deep">Derin (>70)</button>
                     </div>
+                </div>
+
+                <div class="filter-section system-actions">
+                    <button id="theme-toggle" class="action-btn">🌓 Gündüz Modu</button>
+                    <button id="rotation-toggle" class="action-btn active">🌎 Rotasyon: AÇIK</button>
                 </div>
 
                 <div class="layer-toggle">
@@ -67,10 +78,14 @@
         </aside>
 
         <aside class="sidebar feed-sidebar">
-            <div class="list-header">
-                <span id="event-count">Veriler Alınıyor...</span>
-                <button id="sort-btn">🔄 Sırala</button>
-            </div>
+           <div class="list-header">
+    <span id="event-count">Veriler Alınıyor...</span>
+    <button id="sort-btn" class="action-btn mini">
+        <span class="btn-icon">⇅</span>
+        <span class="btn-text">Büyüklüğe Göre</span>
+    </button>
+</div>
+
             <div id="earthquake-feed" class="feed-container">
                 </div>
         </aside>
