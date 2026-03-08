@@ -120,20 +120,23 @@ body, html {
 
 /* Buton Grupları (Zaman, Derinlik ve Sistem) */
 .btn-group-grid, .system-actions { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 8px; 
+    display: flex; /* grid yerine flex kullanarak yan yana diziyoruz */
+    gap: 5px; 
+    width: 100%;
 }
 
 .filter-btn, .action-btn {
+    flex: 1; /* Her butonun eşit alan kaplamasını sağlar */
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-glass);
     color: var(--text-main);
-    padding: 8px; 
-    border-radius: 6px;
-    font-size: 10px; 
+    padding: 6px 2px; /* Dikeyde biraz daralttık */
+    border-radius: 4px;
+    font-size: 9px; /* Metinlerin sığması için bir tık küçülttük */
     cursor: pointer; 
     transition: 0.2s;
+    white-space: nowrap; /* Metnin alt satıra geçmesini engeller */
+    text-align: center;
 }
 
 .filter-btn.active, .action-btn.active { 
