@@ -2,65 +2,88 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sismik Dashboard | Canlı Takip</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SeismoPro | Gelişmiş Jeofizik Analiz Platformu</title>
     
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css' rel='stylesheet' />
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js'></script>
-
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="live-indicator">
-        <span class="pulse-dot"></span>
-        <span class="live-text">CANLI SİSMİK VERİ AKIŞI</span>
-    </div>
-
-    <div id="map"></div>
-
-    <div class="control-panel">
-        <div class="panel-header">
-            <div id="last-update">Senkronize Ediliyor...</div>
-            <div class="stat-container">
-                <span class="stat-badge tag-emsc" title="EMSC Kaynaklı">E: 0</span>
-                <span class="stat-badge tag-usgs" title="USGS Kaynaklı">U: 0</span>
-                <span class="stat-badge tag-gfz" title="GFZ Kaynaklı">G: 0</span>
+    <header class="top-bar">
+        <div class="brand">
+            <div class="logo-pulse"></div>
+            <h1>SEISMO<span>PRO</span></h1>
+        </div>
+        <div id="live-stats" class="global-stats">
+            <div class="stat-item">
+                <span class="label">SON 24S ENERJİ SALINIMI:</span>
+                <span id="total-energy" class="value">0 J</span>
             </div>
         </div>
-        
-        <div class="filter-group">
-            <h4>Büyüklük (Mw)</h4>
-            <div class="btn-grid">
-                <button class="mag-btn btn-active" onclick="EarthquakeApp.changeMag(0, event)">Hepsi</button>
-                <button class="mag-btn" onclick="EarthquakeApp.changeMag(4.5, event)">4.5+</button>
-                <button class="mag-btn" onclick="EarthquakeApp.changeMag(6.0, event)">6.0+</button>
+        <div class="system-time" id="clock">00:00:00</div>
+    </header>
+
+    <main class="app-container">
+        <section id="map"></section>
+
+        <aside class="sidebar control-sidebar">
+            <div class="glass-card main-controls">
+                <h3>Analiz Filtreleri</h3>
+                
+                <div class="filter-section">
+                    <label>Minimum Büyüklük (Mw)</label>
+                    <div class="range-slider">
+                        <input type="range" id="mag-range" min="0" max="9" step="0.5" value="0">
+                        <span id="mag-value">0+</span>
+                    </div>
+                </div>
+
+                <div class="filter-section">
+                    <label>Derinlik Odağı (km)</label>
+                    <div class="btn-group-grid">
+                        <button class="filter-btn active" data-depth="all">Tümü</button>
+                        <button class="filter-btn" data-depth="shallow">Sığ (<70km)</button>
+                        <button class="filter-btn" data-depth="deep">Derin (>70km)</button>
+                    </div>
+                </div>
+
+                <div class="layer-toggle">
+                    <label class="switch-container">
+                        <input type="checkbox" id="plate-boundaries" checked>
+                        <span class="slider"></span>
+                        <span class="label-text">Levha Sınırlarını Göster</span>
+                    </label>
+                </div>
             </div>
-        </div>
 
-        <div class="filter-group">
-            <h4>Zaman Aralığı</h4>
-            <div class="btn-grid">
-                <button class="time-btn" onclick="EarthquakeApp.changeTime('hour', event)">1 Saat</button>
-                <button class="time-btn btn-active" onclick="EarthquakeApp.changeTime('day', event)">24 Saat</button>
-                <button class="time-btn" onclick="EarthquakeApp.changeTime('week', event)">7 Gün</button>
+            <div class="glass-card stats-card">
+                <h3>Sismik Dağılım</h3>
+                <canvas id="depth-chart" height="100"></canvas>
             </div>
-        </div>
+        </aside>
 
-        <div class="action-group">
-            <button id="rotation-btn" class="btn-active" onclick="EarthquakeApp.toggleRotation()">🌎 Durdur</button>
-            <button onclick="EarthquakeApp.toggleTheme()">🌓 Tema</button>
-        </div>
+        <aside class="sidebar feed-sidebar">
+            <div class="list-header">
+                <span id="event-count">0 Olay Listeleniyor</span>
+                <button id="sort-btn">🔄 Büyüklüğe Göre</button>
+            </div>
+            <div id="earthquake-feed" class="feed-container">
+                </div>
+        </aside>
+    </main>
 
-        <div class="sidebar-list-container">
-            <div id="list-count">Depremler</div>
-            <div id="earthquake-list"></div>
+    <footer class="bottom-info">
+        <div class="source-indicators">
+            <span class="src"><i class="dot usgs"></i> USGS</span>
+            <span class="src"><i class="dot emsc"></i> EMSC</span>
+            <span class="src"><i class="dot gfz"></i> GFZ</span>
         </div>
-    </div>
-
-    <div id="loader" style="display:none;">
-        <span class="loader-text">Sismik Veriler Alınıyor...</span>
-    </div>
+        <div id="connection-status">Sinyal: Güçlü</div>
+    </footer>
 
     <script src="script.js"></script>
 </body>
