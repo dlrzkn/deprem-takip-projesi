@@ -11,22 +11,22 @@
     --mag-critical: #c0392b;
 }
 
-/* GÜNDÜZ MODU (LIGHT MODE) - BODY ÜZERİNDEN TETİKLENİR */
+/* GÜNDÜZ MODU (LIGHT MODE) - Mavi Dünya ve Yumuşak Göz Dostu Renkler */
 body.light-mode {
-    --bg-dark: #f0f4f8; /* Göz yormayan açık gri-mavi */
-    --card-glass: rgba(255, 255, 255, 0.95);
-    --border-glass: rgba(0, 0, 0, 0.08);
-    --text-main: #2c3e50;
+    --bg-dark: #e8f0f6; /* Çok hafif mavi-gri karışımı, göz yormaz */
+    --card-glass: rgba(255, 255, 255, 0.9);
+    --border-glass: rgba(0, 123, 255, 0.15);
+    --text-main: #2c3e50; /* Koyu lacivert tonları */
     --accent-blue: #007bff;
 }
 
-/* Harita Atmosferi İçin CSS */
+/* Gündüz Modu Harita Atmosferi */
 body.light-mode #map {
-    background-color: #aad3df; /* Deniz mavisi tonu */
+    background-color: #aad3df; /* Deniz mavisi derinlik hissi */
 }
 
 /* GENEL SIFIRLAMA */
-* { box-sizing: border-box; outline: none; }
+* { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 
 body, html {
     margin: 0; padding: 0;
@@ -35,31 +35,32 @@ body, html {
     color: var(--text-main);
     font-family: 'Inter', sans-serif;
     overflow: hidden;
-    transition: background 0.3s ease;
+    transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 2. ÜST BAR (HEADER) VE CANLI PULSE */
+
+/* 2. ÜST BAR (HEADER) VE CANLI DURUM */
 .top-bar {
     height: 60px;
     background: var(--card-glass);
-    backdrop-filter: blur(15px);
+    backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border-glass);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 20px;
+    padding: 0 25px;
     z-index: 100;
 }
 
-.brand { display: flex; align-items: center; }
-.brand h1 { font-size: 18px; letter-spacing: 2px; font-weight: 800; margin: 0; }
-.brand h1 span { color: var(--accent-blue); }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 19px; letter-spacing: 2px; font-weight: 800; margin: 0; }
+.brand h1 span { color: var(--accent-blue); text-shadow: 0 0 10px rgba(0, 210, 255, 0.3); }
 
+/* Canlı Pulse Efekti */
 .pulse-dot {
     width: 10px; height: 10px;
     background-color: #ff4d4d;
     border-radius: 50%;
-    margin-right: 12px;
     box-shadow: 0 0 0 rgba(255, 77, 77, 0.4);
     animation: pulse-red 2s infinite;
 }
@@ -70,166 +71,84 @@ body, html {
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
 }
 
-.global-stats { font-size: 11px; display: flex; gap: 20px; }
-.stat-item .label { color: #888; margin-right: 5px; }
-.stat-item .value { font-weight: 800; color: var(--accent-blue); }
+.global-stats { font-size: 11px; display: flex; gap: 25px; }
+.stat-item { display: flex; align-items: center; }
+.stat-item .label { color: #888; font-weight: 500; margin-right: 8px; }
+.stat-item .value { font-weight: 800; color: var(--accent-blue); font-family: 'Inter Mono', monospace; }
+
+.system-time {
+    font-family: 'Inter Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: 1px;
+    min-width: 80px;
+}
+
+
 
 /* 3. ANA KONTEYNER VE SIDEBARLAR */
-.app-container {
-    display: flex;
-    height: calc(100vh - 90px);
-    position: relative;
-    width: 100%;
-}
+.app-container { display: flex; height: calc(100vh - 90px); position: relative; width: 100%; }
 
-#map { 
-    position: absolute; 
-    top: 0; left: 0; right: 0; bottom: 0; 
-    width: 100%; height: 100%; 
-}
+#map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
 
-.sidebar {
-    width: 300px; 
-    height: 100%; 
-    padding: 15px;
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px;
-    z-index: 10; 
-    pointer-events: none; /* Harita tıklamalarını engellememesi için */
-}
-
-.sidebar > * { pointer-events: auto; } /* İçindeki kartlar tıklanabilir kalsın */
-
+.sidebar { width: 300px; height: 100%; padding: 15px; display: flex; flex-direction: column; gap: 15px; z-index: 10; pointer-events: none; }
+.sidebar > * { pointer-events: auto; }
 .control-sidebar { position: absolute; left: 0; }
+.feed-sidebar { position: absolute; right: 0; background: var(--card-glass); border-left: 1px solid var(--border-glass); }
 
-.feed-sidebar {
-    position: absolute; 
-    right: 0;
-    background: var(--card-glass);
-    backdrop-filter: blur(20px);
-    border-left: 1px solid var(--border-glass);
-    pointer-events: auto;
+/* Derinlik Dağılımı Görselleştirme (Placeholder) */
+.depth-bar-visual {
+    height: 6px; width: 100%; border-radius: 3px; margin-top: 10px;
+    background: linear-gradient(to right, #ff4d4d, #f1c40f, #3498db);
+    opacity: 0.6;
 }
 
-/* 4. MODERN KONTROL ELEMANLARI VE BUTONLAR */
-.glass-card {
-    background: var(--card-glass);
-    border: 1px solid var(--border-glass);
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-}
-
-.filter-section { margin-bottom: 15px; }
-.filter-section label { display: block; font-size: 10px; margin-bottom: 8px; color: #aaa; }
-
-/* Buton Grupları (Zaman, Derinlik ve Sistem) */
-.btn-group-grid, .system-actions { 
-    display: flex; /* grid yerine flex kullanarak yan yana diziyoruz */
-    gap: 5px; 
-    width: 100%;
-}
-
+/* BUTONLAR: Tek Sıra ve Profesyonel Görünüm */
+.btn-group-grid { display: flex; gap: 4px; width: 100%; }
 .filter-btn, .action-btn {
-    flex: 1; /* Her butonun eşit alan kaplamasını sağlar */
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-glass);
-    color: var(--text-main);
-    padding: 6px 2px; /* Dikeyde biraz daralttık */
-    border-radius: 4px;
-    font-size: 9px; /* Metinlerin sığması için bir tık küçülttük */
-    cursor: pointer; 
-    transition: 0.2s;
-    white-space: nowrap; /* Metnin alt satıra geçmesini engeller */
-    text-align: center;
+    flex: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-glass);
+    color: var(--text-main); padding: 8px 2px; border-radius: 6px; font-size: 10px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap; text-align: center;
 }
 
-.filter-btn.active, .action-btn.active { 
-    background: var(--accent-blue); 
-    color: #000; 
-    font-weight: bold; 
-    border-color: var(--accent-blue);
+.filter-btn:hover, .action-btn:hover { background: rgba(0, 210, 255, 0.1); border-color: var(--accent-blue); }
+
+.filter-btn.active, .action-btn.active {
+    background: var(--accent-blue) !important; color: #000 !important;
+    font-weight: 800; border-color: var(--accent-blue);
+    box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
 }
 
-/* 5. LİSTE (FEED) VE SIRALAMA BUTONU */
-.list-header {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-    padding: 10px 15px; 
-    border-bottom: 1px solid var(--border-glass);
-}
-
-#sort-btn.mini {
-    padding: 4px 8px; 
-    background: transparent;
-    border: 1px solid var(--accent-blue); 
-    color: var(--accent-blue);
-    font-size: 9px; 
-    text-transform: uppercase; 
-    font-weight: bold;
-    cursor: pointer;
-}
-
-#sort-btn.mini:hover {
-    background: var(--accent-blue);
-    color: #000;
-}
-
-.feed-container { 
-    overflow-y: auto; 
-    flex-grow: 1; 
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent-blue) transparent;
-}
-
+/* LİSTE ELEMANLARI */
 .earthquake-node {
-    padding: 12px; 
-    border-bottom: 1px solid var(--border-glass);
-    cursor: pointer; 
-    transition: 0.2s; 
-    display: flex; 
-    align-items: center; 
-    gap: 12px;
+    padding: 15px; border-bottom: 1px solid var(--border-glass);
+    cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 15px;
 }
-
-.earthquake-node:hover { background: rgba(255,255,255,0.05); }
+.earthquake-node:hover { background: rgba(0, 210, 255, 0.05); }
 
 .mag-circle {
-    min-width: 42px; 
-    height: 42px; 
-    border-radius: 50%;
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    font-weight: 800; 
-    font-size: 13px; 
-    border: 2px solid;
+    min-width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px; border: 2.5px solid;
+    transition: transform 0.3s ease;
+}
+.earthquake-node:hover .mag-circle { transform: scale(1.1); }
+
+/* POPUP KARTLARI */
+.mapboxgl-popup-content {
+    border-radius: 12px !important; padding: 0 !important;
+    background: var(--card-glass) !important; backdrop-filter: blur(10px);
+    border: 1px solid var(--border-glass); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-/* 6. ALT BİLGİ (FOOTER) VE MOBİL UYUM */
+.popup-card { padding: 12px; min-width: 180px; }
+
+/* FOOTER */
 .bottom-info {
-    height: 30px; 
-    background: #000;
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-    padding: 0 20px; 
-    font-size: 10px; 
-    color: #555; 
-    z-index: 100;
-}
-
-@media (max-width: 1024px) {
-    .control-sidebar { display: none; } /* Mobilde yer kazanmak için filtreleri gizle */
-    .feed-sidebar { 
-        width: 100%; 
-        position: fixed; 
-        bottom: 30px; 
-        left: 0; 
-        height: 35vh; 
-        border-left: none; 
-        border-top: 1px solid var(--border-glass);
-    }
+    height: 30px; background: rgba(0,0,0,0.9);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 20px; font-size: 10px; color: #777; z-index: 100;
+    border-top: 1px solid var(--border-glass);
 }
