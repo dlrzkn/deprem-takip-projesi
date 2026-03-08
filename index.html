@@ -21,7 +21,7 @@
         <div id="live-stats" class="global-stats">
             <div class="stat-item">
                 <span class="label">SON 24S ENERJİ SALINIMI:</span>
-                <span id="total-energy" class="value">0 J</span>
+                <span id="total-energy" class="value">Hesaplanıyor...</span>
             </div>
         </div>
         <div class="system-time" id="clock">00:00:00</div>
@@ -35,7 +35,7 @@
                 <h3>Analiz Filtreleri</h3>
                 
                 <div class="filter-section">
-                    <label>Minimum Büyüklük (Mw)</label>
+                    <label>Minimum Büyüklük (M<sub>w</sub>)</label>
                     <div class="range-slider">
                         <input type="range" id="mag-range" min="0" max="9" step="0.5" value="0">
                         <span id="mag-value">0+</span>
@@ -43,11 +43,11 @@
                 </div>
 
                 <div class="filter-section">
-                    <label>Derinlik Odağı (km)</label>
+                    <label>Odak Derinliği (km)</label>
                     <div class="btn-group-grid">
                         <button class="filter-btn active" data-depth="all">Tümü</button>
-                        <button class="filter-btn" data-depth="shallow">Sığ (<70km)</button>
-                        <button class="filter-btn" data-depth="deep">Derin (>70km)</button>
+                        <button class="filter-btn" data-depth="shallow">Sığ (<70)</button>
+                        <button class="filter-btn" data-depth="deep">Derin (>70)</button>
                     </div>
                 </div>
 
@@ -55,21 +55,21 @@
                     <label class="switch-container">
                         <input type="checkbox" id="plate-boundaries" checked>
                         <span class="slider"></span>
-                        <span class="label-text">Levha Sınırlarını Göster</span>
+                        <span class="label-text">Levha Sınırları (Tektonik)</span>
                     </label>
                 </div>
             </div>
 
             <div class="glass-card stats-card">
-                <h3>Sismik Dağılım</h3>
+                <h3>Derinlik Dağılımı</h3>
                 <canvas id="depth-chart" height="100"></canvas>
             </div>
         </aside>
 
         <aside class="sidebar feed-sidebar">
             <div class="list-header">
-                <span id="event-count">0 Olay Listeleniyor</span>
-                <button id="sort-btn">🔄 Büyüklüğe Göre</button>
+                <span id="event-count">Veriler Alınıyor...</span>
+                <button id="sort-btn">🔄 Sırala</button>
             </div>
             <div id="earthquake-feed" class="feed-container">
                 </div>
@@ -82,10 +82,9 @@
             <span class="src"><i class="dot emsc"></i> EMSC</span>
             <span class="src"><i class="dot gfz"></i> GFZ</span>
         </div>
-        <div id="connection-status">Sinyal: Güçlü</div>
+        <div id="connection-status">Sistem Kontrol Ediliyor...</div>
     </footer>
 
     <script src="script.js"></script>
 </body>
 </html>
-
