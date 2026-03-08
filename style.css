@@ -1,4 +1,4 @@
-/* 1. ANALİTİK TEMA DEĞİŞKENLERİ */
+/* 1. ANALİTİK TEMA VE RENK SKALASI */
 :root {
     --bg-dark: #0a0c10;
     --card-glass: rgba(18, 22, 28, 0.85);
@@ -11,22 +11,16 @@
     --mag-critical: #c0392b;
 }
 
-/* GÜNDÜZ MODU (LIGHT MODE) - Mavi Dünya ve Yumuşak Göz Dostu Renkler */
 body.light-mode {
-    --bg-dark: #e8f0f6; /* Çok hafif mavi-gri karışımı, göz yormaz */
+    --bg-dark: #e8f0f6;
     --card-glass: rgba(255, 255, 255, 0.9);
     --border-glass: rgba(0, 123, 255, 0.15);
-    --text-main: #2c3e50; /* Koyu lacivert tonları */
+    --text-main: #2c3e50;
     --accent-blue: #007bff;
 }
 
-/* Gündüz Modu Harita Atmosferi */
-body.light-mode #map {
-    background-color: #aad3df; /* Deniz mavisi derinlik hissi */
-}
-
-/* GENEL SIFIRLAMA */
-* { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+/* 2. GENEL YAPI */
+* { box-sizing: border-box; outline: none; }
 
 body, html {
     margin: 0; padding: 0;
@@ -35,120 +29,103 @@ body, html {
     color: var(--text-main);
     font-family: 'Inter', sans-serif;
     overflow: hidden;
-    transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.5s ease;
 }
 
-
-/* 2. ÜST BAR (HEADER) VE CANLI DURUM */
-.top-bar {
-    height: 60px;
-    background: var(--card-glass);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-glass);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 25px;
-    z-index: 100;
-}
-
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand h1 { font-size: 19px; letter-spacing: 2px; font-weight: 800; margin: 0; }
-.brand h1 span { color: var(--accent-blue); text-shadow: 0 0 10px rgba(0, 210, 255, 0.3); }
-
-/* Canlı Pulse Efekti */
-.pulse-dot {
-    width: 10px; height: 10px;
-    background-color: #ff4d4d;
-    border-radius: 50%;
-    box-shadow: 0 0 0 rgba(255, 77, 77, 0.4);
-    animation: pulse-red 2s infinite;
-}
-
-@keyframes pulse-red {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
-}
-
-.global-stats { font-size: 11px; display: flex; gap: 25px; }
-.stat-item { display: flex; align-items: center; }
-.stat-item .label { color: #888; font-weight: 500; margin-right: 8px; }
-.stat-item .value { font-weight: 800; color: var(--accent-blue); font-family: 'Inter Mono', monospace; }
-
-.system-time {
-    font-family: 'Inter Mono', monospace;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-main);
-    letter-spacing: 1px;
-    min-width: 80px;
-}
-
-
-
-/* 3. ANA KONTEYNER VE SIDEBARLAR */
+/* 3. HARİTA VE KONTEYNER */
 .app-container { display: flex; height: calc(100vh - 90px); position: relative; width: 100%; }
-
 #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
 
-.sidebar { width: 300px; height: 100%; padding: 15px; display: flex; flex-direction: column; gap: 15px; z-index: 10; pointer-events: none; }
+/* 4. SIDEBAR SİSTEMİ (KRİTİK DÜZELTME) */
+.sidebar { 
+    width: 320px; height: 100%; padding: 15px; 
+    display: flex; flex-direction: column; gap: 15px; 
+    z-index: 10; pointer-events: none; 
+}
 .sidebar > * { pointer-events: auto; }
-.control-sidebar { position: absolute; left: 0; }
-.feed-sidebar { position: absolute; right: 0; background: var(--card-glass); border-left: 1px solid var(--border-glass); }
 
-/* Derinlik Dağılımı Görselleştirme (Placeholder) */
-.depth-bar-visual {
-    height: 6px; width: 100%; border-radius: 3px; margin-top: 10px;
-    background: linear-gradient(to right, #ff4d4d, #f1c40f, #3498db);
-    opacity: 0.6;
+.control-sidebar { position: absolute; left: 0; }
+.feed-sidebar { 
+    position: absolute; right: 0; 
+    background: var(--card-glass); 
+    border-left: 1px solid var(--border-glass);
+    backdrop-filter: blur(15px);
 }
 
-/* BUTONLAR: Tek Sıra ve Profesyonel Görünüm */
-.btn-group-grid { display: flex; gap: 4px; width: 100%; }
+/* 5. KARTLAR VE FİLTRELER */
+.glass-card {
+    background: var(--card-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    padding: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.glass-card h3 { 
+    margin: 0 0 12px 0; font-size: 13px; 
+    text-transform: uppercase; letter-spacing: 1px; color: var(--accent-blue);
+}
+
+.filter-section { margin-bottom: 15px; }
+.filter-section label { display: block; font-size: 11px; margin-bottom: 8px; opacity: 0.8; }
+
+/* 6. BUTONLAR VE AKTİF DURUMLAR */
+.btn-group-grid { display: flex; gap: 5px; }
 .filter-btn, .action-btn {
     flex: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-glass);
-    color: var(--text-main); padding: 8px 2px; border-radius: 6px; font-size: 10px; font-weight: 600;
-    cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    white-space: nowrap; text-align: center;
+    color: var(--text-main); padding: 10px 5px; border-radius: 6px; font-size: 10px;
+    cursor: pointer; transition: all 0.2s ease;
 }
-
-.filter-btn:hover, .action-btn:hover { background: rgba(0, 210, 255, 0.1); border-color: var(--accent-blue); }
 
 .filter-btn.active, .action-btn.active {
     background: var(--accent-blue) !important; color: #000 !important;
-    font-weight: 800; border-color: var(--accent-blue);
-    box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+    font-weight: 800; border-color: #fff;
 }
 
-/* LİSTE ELEMANLARI */
+/* 7. DEPREM LİSTESİ (FEED) */
+.feed-container { 
+    overflow-y: auto; flex-grow: 1; 
+    scrollbar-width: thin; scrollbar-color: var(--accent-blue) transparent;
+}
+
+.list-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border-glass);
+    margin-bottom: 10px;
+}
+
 .earthquake-node {
-    padding: 15px; border-bottom: 1px solid var(--border-glass);
-    cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 15px;
+    padding: 12px; border-bottom: 1px solid var(--border-glass);
+    cursor: pointer; display: flex; align-items: center; gap: 12px;
+    transition: 0.2s;
 }
-.earthquake-node:hover { background: rgba(0, 210, 255, 0.05); }
+.earthquake-node:hover { background: rgba(0, 210, 255, 0.1); }
 
-.mag-circle {
-    min-width: 44px; height: 44px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 14px; border: 2.5px solid;
-    transition: transform 0.3s ease;
+.node-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.node-meta { font-size: 11px; opacity: 0.6; }
+
+/* 8. JEOFİZİKSEL ANALİZ GÖRSELLERİ */
+.depth-bar-visual {
+    height: 8px; width: 100%; border-radius: 4px; margin-top: 12px;
+    background: #222; overflow: hidden; display: flex;
 }
-.earthquake-node:hover .mag-circle { transform: scale(1.1); }
 
-/* POPUP KARTLARI */
+/* 9. POPUP VE BİLGİ KARTLARI */
 .mapboxgl-popup-content {
-    border-radius: 12px !important; padding: 0 !important;
-    background: var(--card-glass) !important; backdrop-filter: blur(10px);
-    border: 1px solid var(--border-glass); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    background: #0a0c10 !important; color: #fff !important;
+    border: 1px solid var(--accent-blue); border-radius: 8px !important;
+    padding: 15px !important; box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-.popup-card { padding: 12px; min-width: 180px; }
-
-/* FOOTER */
+/* 10. ALT BİLGİ (FOOTER) */
 .bottom-info {
     height: 30px; background: rgba(0,0,0,0.9);
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0 20px; font-size: 10px; color: #777; z-index: 100;
+    padding: 0 20px; font-size: 10px; color: #777;
     border-top: 1px solid var(--border-glass);
 }
+
+.dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+.usgs { background: #2ecc71; }
+.emsc { background: #3498db; }
+.gfz { background: #e67e22; }
