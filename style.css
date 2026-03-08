@@ -13,10 +13,16 @@
 
 /* GÜNDÜZ MODU (LIGHT MODE) - BODY ÜZERİNDEN TETİKLENİR */
 body.light-mode {
-    --bg-dark: #f0f2f5;
-    --card-glass: rgba(255, 255, 255, 0.9);
-    --border-glass: rgba(0, 0, 0, 0.1);
-    --text-main: #1a1a1b;
+    --bg-dark: #f0f4f8; /* Göz yormayan açık gri-mavi */
+    --card-glass: rgba(255, 255, 255, 0.95);
+    --border-glass: rgba(0, 0, 0, 0.08);
+    --text-main: #2c3e50;
+    --accent-blue: #007bff;
+}
+
+/* Harita Atmosferi İçin CSS */
+body.light-mode #map {
+    background-color: #aad3df; /* Deniz mavisi tonu */
 }
 
 /* GENEL SIFIRLAMA */
