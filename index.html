@@ -11,7 +11,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="dark-mode"> <header class="top-bar">
+<body class="dark-mode"> 
+    <header class="top-bar">
         <div class="brand">
             <div class="pulse-dot"></div> <h1>SEISMO<span>PRO</span></h1>
         </div>
@@ -34,7 +35,7 @@
                 <div class="filter-section">
                     <label>Minimum Büyüklük (M<sub>w</sub>)</label>
                     <div class="range-slider">
-                        <input type="range" id="mag-range" min="0" max="9" step="0.5" value="0">
+                        <input type="range" id="mag-slider" min="0" max="9" step="0.5" value="0">
                         <span id="mag-value">0+</span>
                     </div>
                 </div>
@@ -73,18 +74,20 @@
 
             <div class="glass-card stats-card">
                 <h3>Derinlik Dağılımı</h3>
-                <canvas id="depth-chart" height="100"></canvas>
+                <div id="depth-analysis-container">
+                    <div class="loading-small">Analiz ediliyor...</div>
+                </div>
             </div>
         </aside>
 
         <aside class="sidebar feed-sidebar">
-           <div class="list-header">
-    <span id="event-count">Veriler Alınıyor...</span>
-    <button id="sort-btn" class="action-btn mini">
-        <span class="btn-icon">⇅</span>
-        <span class="btn-text">Büyüklüğe Göre</span>
-    </button>
-</div>
+            <div class="list-header">
+                <span id="event-count">Veriler Alınıyor...</span>
+                <button id="sort-btn" class="action-btn mini">
+                    <span class="btn-icon">⇅</span>
+                    <span class="btn-text">En Güncel</span>
+                </button>
+            </div>
 
             <div id="earthquake-feed" class="feed-container">
                 </div>
