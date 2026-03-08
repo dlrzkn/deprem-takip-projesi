@@ -19,24 +19,19 @@
         <div id="live-stats" class="global-stats">
             <div class="stat-item">
                 <span id="energy-label" class="label">SON 24S ENERJİ SALINIMI:</span>
-                <span id="total-energy" class="value">Hesaplanıyor...</span>
-            </div>
+                <span id="total-energy" class="value">Hesaplanıyor...</span> </div>
         </div>
-        <div class="system-time" id="clock">00:00:00</div>
-    </header>
+        <div class="system-time" id="clock">00:00:00</div> </header>
 
     <main class="app-container">
-        <section id="map"></section>
-
-        <aside class="sidebar control-sidebar">
+        <section id="map"></section> <aside class="sidebar control-sidebar">
             <div class="glass-card main-controls">
                 <h3>Analiz Filtreleri</h3>
                 
                 <div class="filter-section">
                     <label>Minimum Büyüklük (M<sub>w</sub>)</label>
                     <div class="range-slider">
-                        <input type="range" id="mag-slider" min="0" max="9" step="0.5" value="0">
-                        <span id="mag-value">0+</span>
+                        <input type="range" id="mag-slider" min="0" max="9" step="0.5" value="0"> <span id="mag-value">0+</span>
                     </div>
                 </div>
 
@@ -60,8 +55,7 @@
 
                 <div class="filter-section system-actions">
                     <button id="theme-toggle" class="action-btn">🌓 Gündüz Modu</button>
-                    <button id="rotation-toggle" class="action-btn active">🌎 Rotasyon: AÇIK</button>
-                </div>
+                    <button id="rotation-toggle" class="action-btn active">🔄 Rotasyon: AÇIK</button> </div>
 
                 <div class="layer-toggle">
                     <label class="switch-container">
@@ -74,24 +68,19 @@
 
             <div class="glass-card stats-card">
                 <h3>Derinlik Dağılımı</h3>
-                <div id="depth-analysis-container">
-                    <div class="loading-small">Analiz ediliyor...</div>
+                <div id="depth-analysis" class="analysis-results"> Analiz yükleniyor...
                 </div>
             </div>
         </aside>
 
         <aside class="sidebar feed-sidebar">
             <div class="list-header">
-                <span id="event-count">Veriler Alınıyor...</span>
-                <button id="sort-btn" class="action-btn mini">
+                <span id="event-count">Veriler Alınıyor...</span> <button id="sort-btn" class="action-btn mini">
                     <span class="btn-icon">⇅</span>
-                    <span class="btn-text">En Güncel</span>
-                </button>
+                    <span class="btn-text">En Güncel</span> </button>
             </div>
 
-            <div id="earthquake-feed" class="feed-container">
-                </div>
-        </aside>
+            <div id="earthquake-feed" class="feed-container"></div> </aside>
     </main>
 
     <footer class="bottom-info">
